@@ -1,9 +1,8 @@
 from pathlib import Path
-from typing import Union
 from ..ontology import BaseOntologyFileFormat
 
 
-class DiseaseOntologyFileFormat(BaseOntologyFileFormat):
+class GeneOntologyFileFormat(BaseOntologyFileFormat):
     @classmethod
     def generate_template(cls, filepath: str | Path):
         """Generate a template file.
@@ -16,7 +15,10 @@ class DiseaseOntologyFileFormat(BaseOntologyFileFormat):
             f.write(f"{cls.ID}\t{cls.NAME}\t{cls.LABEL}\t{cls.RESOURCE}\n")
             f.writelines(
                 [
-                    "DOID:4001\tovarian carcinoma\tDisease\tDOID\n",
-                    "MESH:D015673\tFatigue Syndrom, Chronic\tDisease\tDOID\n",
+                    "ENTREZ:7157\ttumor protein p53\tGene\tENTREZ\n",
+                    "ENTREZ:7100\ttoll like receptor 5\tGene\tENTREZ\n",
+                    "HGNC:11998\targinine vasopressin\tGene\tHGNC\n",
+                    "ENSEMBL:ENSG00000141510\ttumor protein p53\tGene\tENSEMBL\n",
+                    "SYMBOL:TP53\ttumor protein p53\tGene\tSYMBOL\n",
                 ]
             )

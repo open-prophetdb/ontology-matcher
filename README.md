@@ -23,5 +23,67 @@ git clone https://github.com/yjcyxky/ontology-matcher.git
 
 cd ontology-matcher
 
-pip install -r requirements.txt
+python setup.py install
+```
+
+#### 2. Examples
+
+Output the help information:
+
+```bash
+onto-match --help
+
+# Usage: onto-match [OPTIONS] COMMAND [ARGS]...
+
+# Options:
+#   --help  Show this message and exit.
+
+# Commands:
+#   convert   Convert ontology ids.
+#   idtypes   Which ID types are supported.
+#   template  Generate input file template
+```
+
+Output the supported id types:
+
+```bash
+onto-match idtypes --help
+
+# Usage: onto-match idtypes [OPTIONS]
+
+#   Which ID types are supported.
+
+# Options:
+#   -O, --ontology-type [disease|gene]
+#                                   Ontology type  [required]
+#   --help                          Show this message and exit.
+
+onto-match idtypes -O disease
+
+# Outpus as follows:
+# OMIM
+# DOID
+```
+
+Output the input file template:
+
+```bash
+onto-match template --help
+
+# Usage: onto-match template [OPTIONS]
+
+#   Generate input file template
+
+# Options:
+#   -O, --ontology-type [disease|gene]
+#                                   Ontology type  [required]
+#   -o, --output-file TEXT          Path to output file  [required]
+#   --help                          Show this message and exit.
+
+onto-match template -O disease -o input.tsv
+
+# Output as follows:
+# ID	name	:LABEL	resource
+# DOID:4001	ovarian carcinoma	Disease	DOID
+# MESH:D015673	Fatigue Syndrom, Chronic	Disease	DOID
 ```

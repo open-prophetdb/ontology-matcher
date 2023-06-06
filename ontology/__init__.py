@@ -1,10 +1,19 @@
 from typing import Type
-from ontology.disease import DiseaseOntologyFormatter
-from ontology.ontology import BaseOntologyFormatter
+from ontology.disease import DiseaseOntologyFormatter, DISEASE_DICT
+from ontology.disease.types import DiseaseOntologyFileFormat
 
-ontology_dict: dict[str, Type[BaseOntologyFormatter]] = {
+from ontology.gene import GeneOntologyFormatter, GENE_DICT
+from ontology.gene.types import GeneOntologyFileFormat
+
+from ontology.ontology import (
+    BaseOntologyFormatter,
+    BaseOntologyFileFormat,
+    OntologyType,
+)
+
+ONTOLOGY_DICT: dict[str, Type[BaseOntologyFormatter]] = {
     "disease": DiseaseOntologyFormatter,
-    # "gene": None,
+    "gene": GeneOntologyFormatter,
     # "compound": None,
     # "anatomy": None,
     # "pathway": None,
@@ -18,5 +27,45 @@ ontology_dict: dict[str, Type[BaseOntologyFormatter]] = {
     # "metabolite": None,
 }
 
+ONTOLOGY_DICT_KEYS = list(ONTOLOGY_DICT.keys())
 
-__all__ = ["ontology_dict", "BaseOntologyFormatter", "DiseaseOntologyFormatter"]
+ONTOLOGY_TYPE_DICT: dict[str, OntologyType] = {
+    "disease": DISEASE_DICT,
+    "gene": GENE_DICT,
+    # "compound": None,
+    # "anatomy": None,
+    # "pathway": None,
+    # "cellular_component": None,
+    # "molecular_function": None,
+    # "biological_process": None,
+    # "pharmacologic_class": None,
+    # "side_effect": None,
+    # "symptom": None,
+    # "protein": None,
+    # "metabolite": None,
+}
+
+ONTOLOGY_FILE_FORMAT_DICT: dict[str, Type[BaseOntologyFileFormat]] = {
+    "disease": DiseaseOntologyFileFormat,
+    "gene": GeneOntologyFileFormat,
+    # "compound": None,
+    # "anatomy": None,
+    # "pathway": None,
+    # "cellular_component": None,
+    # "molecular_function": None,
+    # "biological_process": None,
+    # "pharmacologic_class": None,
+    # "side_effect": None,
+    # "symptom": None,
+    # "protein": None,
+    # "metabolite": None,
+}
+
+__all__ = [
+    "ONTOLOGY_DICT",
+    "BaseOntologyFormatter",
+    "DiseaseOntologyFormatter",
+    "GeneOntologyFormatter",
+    "ONTOLOGY_DICT_KEYS",
+    "ONTOLOGY_TYPE_DICT",
+]

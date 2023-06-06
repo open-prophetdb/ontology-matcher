@@ -54,7 +54,7 @@ class ConversionResult:
     default_database: str
     converted_ids: List[Union[ConvertedId, Dict[str, str]]]
     databases: List[str]
-    database_url: str
+    database_url: Optional[str]
     failed_ids: List[FailedId]
 
 
@@ -153,6 +153,14 @@ class OntologyBaseConverter:
     def sleep_time(self):
         return self._sleep_time
 
+    def add_failed_id(self, failed_id: FailedId):
+        """Add a failed id into the list of failed ids."""
+        self._failed_ids.append(failed_id)
+
+    def add_converted_id(self, converted_id: Union[ConvertedId, Dict[str, str]]):
+        """Add a converted id into the list of converted ids."""
+        self._converted_ids.append(converted_id)
+
     def convert(self) -> ConversionResult:
         """Convert the ids.
 
@@ -162,11 +170,20 @@ class OntologyBaseConverter:
         raise NotImplementedError
 
 
-class BaseOntologyFileFormat(Enum):
+class BaseOntologyFileFormat:
     ID = "ID"
     NAME = "name"
     LABEL = ":LABEL"
     RESOURCE = "resource"
+
+    @classmethod
+    def generate_template(cls, filepath: Union[str, Path]):
+        """Generate a template file.
+
+        Args:
+            filepath (Union[str, Path]): The path of the template file.
+        """
+        raise NotImplementedError
 
 
 class BaseOntologyFormatter:
@@ -198,13 +215,15 @@ class BaseOntologyFormatter:
         if ontology_converter is None:
             raise Exception("The ontology converter must be specified.")
 
-        self._expected_columns = [e.value for e in format]
+        self._expected_columns = [
+            vars(format).get(attr) for attr in dir(format) if not attr.startswith("__")
+        ]
 
         self._check_format()
 
         if dict is None:
             self._dict = ontology_converter(
-                ids=self._data[format.ID.value].tolist(), **kwargs
+                ids=self._data[format.ID].tolist(), **kwargs
             ).convert()
         else:
             self._dict = dict

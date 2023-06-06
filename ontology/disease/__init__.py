@@ -214,7 +214,7 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
 
         for converted_id in self._dict.converted_ids:
             raw_id = converted_id.get("raw_id")
-            row = self._data[self._data[DiseaseOntologyFileFormat.ID.value] == raw_id]
+            row = self._data[self._data[DiseaseOntologyFileFormat.ID] == raw_id]
             id = converted_id.get(DISEASE_DICT.default)
             new_row = {key: row[key].values[0] for key in self._expected_columns}
 
@@ -226,9 +226,9 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
                 if type(id) == list and len(id) == 1:
                     id = id[0]
 
-                new_row[DiseaseOntologyFileFormat.ID.value] = id
-                new_row[DiseaseOntologyFileFormat.RESOURCE.value] = DISEASE_DICT.default
-                new_row[DiseaseOntologyFileFormat.LABEL.value] = DISEASE_DICT.type
+                new_row[DiseaseOntologyFileFormat.ID] = id
+                new_row[DiseaseOntologyFileFormat.RESOURCE] = DISEASE_DICT.default
+                new_row[DiseaseOntologyFileFormat.LABEL] = DISEASE_DICT.type
 
                 ids = [
                     converted_id.get(x)
@@ -249,11 +249,11 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
         for failed_id in self._dict.failed_ids:
             id = failed_id.id
             prefix, value = id.split(":")
-            row = self._data[self._data[DiseaseOntologyFileFormat.ID.value] == id]
+            row = self._data[self._data[DiseaseOntologyFileFormat.ID] == id]
             new_row = {key: row[key].values[0] for key in self._expected_columns}
-            new_row[DiseaseOntologyFileFormat.ID.value] = id
-            new_row[DiseaseOntologyFileFormat.LABEL.value] = DISEASE_DICT.type
-            new_row[DiseaseOntologyFileFormat.RESOURCE.value] = prefix
+            new_row[DiseaseOntologyFileFormat.ID] = id
+            new_row[DiseaseOntologyFileFormat.LABEL] = DISEASE_DICT.type
+            new_row[DiseaseOntologyFileFormat.RESOURCE] = prefix
             new_row["aliases"] = ""
 
             # Keep the original record if the id match the default prefix.
@@ -276,6 +276,14 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
 
 
 if __name__ == "__main__":
-    ids = ["DOID:7402", "DOID:7400", "DOID:7401", "DOID:8731", "DOID:8729", "DOID:8725"]
+    ids = [
+        "DOID:7402",
+        "DOID:7400",
+        "DOID:7401",
+        "DOID:8731",
+        "DOID:8729",
+        "DOID:8725",
+        "MESH:D015673",
+    ]
     disease = DiseaseOntologyConverter(ids)
     result = disease.convert()
