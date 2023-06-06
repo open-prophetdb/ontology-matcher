@@ -1,7 +1,3 @@
-from enum import Enum
+from ..ontology import BaseOntologyFileFormat
 
-class DiseaseOntologyFileFormat(Enum):
-    ID = "ID"
-    NAME = "name"
-    LABEL = ":LABEL"
-    RESOURCE = "resource"
+DiseaseOntologyFileFormat = BaseOntologyFileFormat
