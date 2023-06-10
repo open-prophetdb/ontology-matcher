@@ -90,7 +90,7 @@ onto-match template -O disease -o input.tsv
 
 ### Current Status
 
-|     Ontology Type      |        Database         | Number of Entities |      Plan       |
+|      Entity Type       |        Database         | Number of Entities |      Plan       |
 | :--------------------: | :---------------------: | :----------------: | :-------------: |
 |        Disease         |     DOID;MESH;OMIM      |       13,270       |        √        |
 |          Gene          |         ENTREZ          |      589,823       |        √        |
