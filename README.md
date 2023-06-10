@@ -87,3 +87,21 @@ onto-match template -O disease -o input.tsv
 # DOID:4001	ovarian carcinoma	Disease	DOID
 # MESH:D015673	Fatigue Syndrom, Chronic	Disease	DOID
 ```
+
+### Current Status
+
+|     Ontology Type      |        Database         | Number of Entities |      Plan       |
+| :--------------------: | :---------------------: | :----------------: | :-------------: |
+|        Disease         |     DOID;MESH;OMIM      |       13,270       |        √        |
+|          Gene          |         ENTREZ          |      589,823       |        √        |
+| Compound/Chemical/Drug |      DRUGBANK;MESH      |      175,910       |        √        |
+|        Pathway         | KEGG;WIKIPATHWAYS;REACT |        2567        |        √        |
+|   CellularComponent    |           GO            |        1132        |        √        |
+|   MolecularFunction    |           GO            |        2068        |        √        |
+|   BiologicalProcess    |           GO            |        9072        |        √        |
+|        Anatomy         |       UBERON;MESH       |        1844        |        √        |
+|   PharmacologicClass   |     HETIONET;NDF-RT     |       45,605       |        √        |
+|        Protein         |                         |                    |  Copy from CKG  |
+|       SideEffect       |                         |                    | To be continued |
+|       Metabolite       |                         |                    | To be continued |
+|        Symptom         |                         |                    | To be continued |
