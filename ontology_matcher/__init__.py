@@ -1,11 +1,11 @@
 from typing import Type
-from ontology.disease import DiseaseOntologyFormatter, DISEASE_DICT
-from ontology.disease.types import DiseaseOntologyFileFormat
+from ontology_matcher.disease import DiseaseOntologyFormatter, DISEASE_DICT
+from ontology_matcher.disease.types import DiseaseOntologyFileFormat
 
-from ontology.gene import GeneOntologyFormatter, GENE_DICT
-from ontology.gene.types import GeneOntologyFileFormat
+from ontology_matcher.gene import GeneOntologyFormatter, GENE_DICT
+from ontology_matcher.gene.types import GeneOntologyFileFormat
 
-from ontology.ontology import (
+from ontology_matcher.ontology_formatter import (
     BaseOntologyFormatter,
     BaseOntologyFileFormat,
     OntologyType,

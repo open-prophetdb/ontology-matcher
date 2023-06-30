@@ -2,7 +2,7 @@
 
 import unittest
 from unittest.mock import patch, MagicMock
-from ontology.disease import DiseaseOntologyFormatter, DiseaseOntologyConverter
+from ontology_matcher.disease import DiseaseOntologyFormatter, DiseaseOntologyConverter
 
 
 # Test DiseaseOntologyConverter

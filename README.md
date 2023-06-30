@@ -39,7 +39,8 @@ onto-match --help
 #   --help  Show this message and exit.
 
 # Commands:
-#   convert   Convert ontology ids.
+#   ontology  Convert & format ontology ids.
+#   knowledge Convert & format knowledges which represent as the relations between entities.
 #   idtypes   Which ID types are supported.
 #   template  Generate input file template
 ```
@@ -83,12 +84,14 @@ onto-match template --help
 onto-match template -O disease -o input.tsv
 
 # Output as follows:
-# ID	name	:LABEL	resource
+# id	name	label	resource
 # DOID:4001	ovarian carcinoma	Disease	DOID
 # MESH:D015673	Fatigue Syndrom, Chronic	Disease	DOID
 ```
 
 ### Current Status
+
+#### Ontologies
 
 |      Entity Type       |        Database         | Number of Entities |      Plan       |
 | :--------------------: | :---------------------: | :----------------: | :-------------: |
@@ -105,3 +108,8 @@ onto-match template -O disease -o input.tsv
 |       SideEffect       |                         |                    | To be continued |
 |       Metabolite       |                         |                    | To be continued |
 |        Symptom         |                         |                    | To be continued |
+
+#### Knowledges
+
+| Relation Type | Database | Number of Relations | Plan |
+| :-----------: | :------: | :-----------------: | :--: |

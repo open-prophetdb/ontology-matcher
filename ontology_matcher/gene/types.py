@@ -1,5 +1,5 @@
 from pathlib import Path
-from ..ontology import BaseOntologyFileFormat
+from ..ontology_formatter import BaseOntologyFileFormat
 
 
 class GeneOntologyFileFormat(BaseOntologyFileFormat):

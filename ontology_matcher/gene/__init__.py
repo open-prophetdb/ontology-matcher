@@ -3,7 +3,7 @@ import mygene
 import pandas as pd
 from pathlib import Path
 from typing import Union, List, Optional
-from ontology.ontology import (
+from ontology_matcher.ontology_formatter import (
     OntologyType,
     Strategy,
     ConversionResult,

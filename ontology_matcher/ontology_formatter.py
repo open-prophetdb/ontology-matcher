@@ -171,9 +171,9 @@ class OntologyBaseConverter:
 
 
 class BaseOntologyFileFormat:
-    ID = "ID"
+    ID = "id"
     NAME = "name"
-    LABEL = ":LABEL"
+    LABEL = "label"
     RESOURCE = "resource"
 
     @classmethod

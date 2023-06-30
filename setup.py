@@ -31,7 +31,7 @@ setup(
     description="It's a simple ontology matcher for building a set of cleaned ontologies. These ontologies will be used for building a knowledge graph.",
     entry_points={
         "console_scripts": [
-            "onto-match=ontology.cli:cli",
+            "onto-match=ontology_matcher.cli:cli",
         ],
     },
     install_requires=requirements,

@@ -1,8 +1,9 @@
 from pathlib import Path
-from ..ontology import BaseOntologyFileFormat
+from typing import Union
+from ..ontology_formatter import BaseOntologyFileFormat
 
 
-class SymptomOntologyFileFormat(BaseOntologyFileFormat):
+class DiseaseOntologyFileFormat(BaseOntologyFileFormat):
     @classmethod
     def generate_template(cls, filepath: str | Path):
         """Generate a template file.
@@ -13,9 +14,9 @@ class SymptomOntologyFileFormat(BaseOntologyFileFormat):
         filepath = Path(filepath)
         with open(filepath, "w") as f:
             f.write(f"{cls.ID}\t{cls.NAME}\t{cls.LABEL}\t{cls.RESOURCE}\n")
-            # f.writelines(
-            #     [
-            #         "DOID:4001\tovarian carcinoma\tDisease\tDOID\n",
-            #         "MESH:D015673\tFatigue Syndrom, Chronic\tDisease\tDOID\n",
-            #     ]
-            # )
+            f.writelines(
+                [
+                    "DOID:4001\tovarian carcinoma\tDisease\tDOID\n",
+                    "MESH:D015673\tFatigue Syndrom, Chronic\tDisease\tDOID\n",
+                ]
+            )

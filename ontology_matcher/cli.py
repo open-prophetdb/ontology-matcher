@@ -1,6 +1,6 @@
 import click
 from typing import Type, Union
-from ontology import (
+from ontology_matcher import (
     ONTOLOGY_DICT,
     BaseOntologyFormatter,
     ONTOLOGY_DICT_KEYS,
@@ -35,7 +35,7 @@ cli = click.Group()
 )
 @click.option("--batch-size", "-b", help="Batch size, default is 300.", default=300)
 @click.option("--sleep-time", "-s", help="Sleep time, default is 3.", default=3)
-def convert(input_file, output_file, ontology_type, batch_size, sleep_time):
+def ontology(input_file, output_file, ontology_type, batch_size, sleep_time):
     """Ontology matcher"""
     ontology_formatter_cls: Union[
         Type[BaseOntologyFormatter], None
