@@ -40,7 +40,7 @@ setup(
     include_package_data=True,
     keywords="Ontology Matcher",
     name="ontology-matcher",
-    packages=find_packages(include=["ontology", "ontology.*"]),
+    packages=find_packages(include=["ontology_matcher", "ontology_matcher.*"]),
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/yjcyxky/ontology-matcher",

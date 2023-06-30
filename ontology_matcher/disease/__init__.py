@@ -3,7 +3,7 @@ import time
 import requests
 import pandas as pd
 from pathlib import Path
-from typing import Union, List, Optional
+from typing import Dict, Union, List, Optional
 from ontology_matcher.ontology_formatter import (
     OntologyType,
     Strategy,
@@ -11,10 +11,15 @@ from ontology_matcher.ontology_formatter import (
     FailedId,
     OntologyBaseConverter,
     BaseOntologyFormatter,
+    NoResultException
 )
-from .types import DiseaseOntologyFileFormat
+from ontology_matcher.disease.types import DiseaseOntologyFileFormat
 
-DISEASE_DICT = OntologyType(type="Disease", default="DOID", choices=["DOID", "MESH"])
+DISEASE_DICT = OntologyType(
+    type="Disease",
+    default="MONDO",
+    choices=["MONDO", "DOID", "MESH", "OMIM", "ICD-9", "HP", "ICD10CM", "SNOMED", "ORDO", "UMLS"],
+)
 
 
 class DiseaseOntologyConverter(OntologyBaseConverter):
@@ -26,12 +31,12 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
         """Initialize the Disease class for id conversion.
 
         Args:
-            ids (List[str]): A list of disease ids (Currently support DOID and MESH).
+            ids (List[str]): A list of disease ids (Currently support MONDO, DOID and MESH).
             strategy (Strategy, optional): The strategy to keep the results. Defaults to Strategy.MIXTURE, it means that the results will mix different database ids.
             batch_size (int, optional): The batch size for each request. Defaults to 300.
             sleep_time (int, optional): The sleep time between each request. Defaults to 3.
         """
-        super().__init__(
+        super(DiseaseOntologyConverter, self).__init__(
             ontology_type=DISEASE_DICT,
             ids=ids,
             strategy=strategy,
@@ -41,6 +46,21 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
 
         # More details on the database_url can be found here: https://www.ebi.ac.uk/spot/oxo/index
         self._database_url = "https://www.ebi.ac.uk/spot/oxo/api/search"
+        print("The formatter will use the OXO API to convert the disease ids.")
+
+    @property
+    def ontology_links(self) -> Dict[str, str]:
+        return {
+            "MONDO": "https://www.ebi.ac.uk/ols4/ontologies/mondo",
+            "DOID": "https://www.ebi.ac.uk/ols4/ontologies/doid",
+            "MESH": "https://meshb.nlm.nih.gov/search",
+            "OMIM": "https://www.omim.org/",
+            "ICD-9": "https://www.cdc.gov/nchs/icd/icd9.htm",
+            "HP": "https://hpo.jax.org/app/",
+            "ICD10CM": "https://www.cdc.gov/nchs/icd/icd-10-cm.htm",
+            "SNOMED": "https://www.snomed.org/",
+            "ORDO": "https://www.orpha.net/consor/cgi-bin/index.php",
+        }
 
     def _format_response(self, response: dict, batch_ids: List[str]) -> None:
         """Format the response from the OXO API.
@@ -57,7 +77,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
         """
         search_results = response.get("_embedded", {}).get("searchResults", [])
         if len(search_results) == 0:
-            raise Exception("No results found")
+            raise NoResultException()
 
         print(
             "Batch size: %s, results size: %s" % (len(batch_ids), len(search_results))
@@ -284,6 +304,12 @@ if __name__ == "__main__":
         "DOID:8729",
         "DOID:8725",
         "MESH:D015673",
+        "ICD10CM:C34.9",
+        "SNOMED:254637007",
+        "HP:0030358",
+        "ORDO:94063",
+        "UMLS:C0007131"
     ]
     disease = DiseaseOntologyConverter(ids)
     result = disease.convert()
+    print(result)

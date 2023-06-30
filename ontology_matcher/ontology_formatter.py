@@ -90,11 +90,17 @@ class OntologyBaseConverter:
         self._databases = ontology_type.choices
         self._batch_size = batch_size
         self._sleep_time = sleep_time
+        
+        self.print_ontology_links()
 
         if self._batch_size > 500:
             raise Exception("The batch size cannot be larger than 500.")
 
         self._check_ids()
+    
+    @property
+    def ontology_links(self) -> Dict[str, str]:
+        return NotImplementedError # type: ignore
 
     def _check_ids(self):
         """Check if the ids are in the correct format.
@@ -109,7 +115,7 @@ class OntologyBaseConverter:
                     {"idx": idx, "id": id, "reason": "The id must be a string."}
                 )
 
-            if not re.match(r"^(%s):[a-z0-9A-Z]+$" % "|".join(self._databases), id):
+            if not re.match(r"^(%s):[a-z0-9A-Z\.]+$" % "|".join(self._databases), id):
                 failed_ids.append(
                     {
                         "idx": idx,
@@ -156,6 +162,19 @@ class OntologyBaseConverter:
     def add_failed_id(self, failed_id: FailedId):
         """Add a failed id into the list of failed ids."""
         self._failed_ids.append(failed_id)
+
+    def print_ontology_links(self):
+        """Print the ontology links."""
+        # Check the ontology links
+        missed = set(self._databases) - set(self.ontology_links.keys())
+        if len(missed) > 0:
+            raise Exception("Links of the following databases are missed: %s" % missed)
+
+        print("NOTICE:\nYou can find more details on the following websites (NOTICE: We don't check whether an ID is valid; we simply attempt to map it to the default ontology database we have chosen):")
+        for key, value in self.ontology_links.items():
+            print(f"{key}: {value}")
+            
+        print("\n")
 
     def add_converted_id(self, converted_id: Union[ConvertedId, Dict[str, str]]):
         """Add a converted id into the list of converted ids."""
@@ -287,6 +306,7 @@ class BaseOntologyFormatter:
         raise NotImplementedError
 
     def filter(self) -> pd.DataFrame:
+        """Filter the invalid data."""
         raise NotImplementedError
 
     def write(self, filepath: Union[str, Path]):
@@ -319,3 +339,16 @@ class BaseOntologyFormatter:
         # Pickle the object
         with open(Path(filepath).with_suffix(".pkl"), "wb") as f:
             pickle.dump(obj, f)
+
+class NoResultException(Exception):
+    """The exception for no result."""
+
+    def __init__(self, message: str = "") -> None:
+        """Initialize the NoResultException class.
+
+        Args:
+            message (str, optional): The error message.
+        """
+        if message == "":
+            message = "Sorry, something went wrong. No results found. It may be caused by network issue, traffic limit or invalid ids. If the issue persists, you can choose a big sleep time and a small batch size, then try again. or check the ids manually."
+        super().__init__(message)

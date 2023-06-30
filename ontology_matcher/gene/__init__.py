@@ -2,7 +2,7 @@ import time
 import mygene
 import pandas as pd
 from pathlib import Path
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Dict
 from ontology_matcher.ontology_formatter import (
     OntologyType,
     Strategy,
@@ -10,8 +10,9 @@ from ontology_matcher.ontology_formatter import (
     FailedId,
     OntologyBaseConverter,
     BaseOntologyFormatter,
+    NoResultException
 )
-from .types import GeneOntologyFileFormat
+from ontology_matcher.gene.types import GeneOntologyFileFormat
 
 default_field_dict = {
     "ENTREZ": "entrezgene",
@@ -59,6 +60,19 @@ class GeneOntologyConverter(OntologyBaseConverter):
 
         self._database_url = "https://mygene.info"
         self._mygene = mygene.MyGeneInfo()
+        print(
+            "The formatter will use the mygene API (%s) to convert gene ids."
+            % self._database_url
+        )
+
+    @property
+    def ontology_links(self) -> Dict[str, str]:
+        return {
+            "ENTREZ": "https://www.ncbi.nlm.nih.gov/gene/",
+            "ENSEMBL": "http://useast.ensembl.org/index.html",
+            "HGNC": "https://www.genenames.org",
+            "SYMBOL": "https://www.genenames.org",
+        }
 
     def _format_response(
         self, search_results: pd.DataFrame, batch_ids: List[str]
@@ -76,7 +90,7 @@ class GeneOntologyConverter(OntologyBaseConverter):
             None
         """
         if search_results.empty:
-            raise Exception("No results found")
+            raise NoResultException()
 
         print(
             "Batch size: %s, results size: %s"
@@ -299,3 +313,4 @@ if __name__ == "__main__":
     ids = ["ENTREZ:7157", "ENTREZ:7158", "ENSEMBL:ENSG00000141510", "HGNC:11892"]
     gene = GeneOntologyConverter(ids)
     result = gene.convert()
+    print(result)

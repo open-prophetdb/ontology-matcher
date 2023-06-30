@@ -15,7 +15,7 @@ class SymptomOntologyFileFormat(BaseOntologyFileFormat):
             f.write(f"{cls.ID}\t{cls.NAME}\t{cls.LABEL}\t{cls.RESOURCE}\n")
             # f.writelines(
             #     [
-            #         "DOID:4001\tovarian carcinoma\tDisease\tDOID\n",
-            #         "MESH:D015673\tFatigue Syndrom, Chronic\tDisease\tDOID\n",
+            #         "MESH:D000006\tAbdomen, Acute\tSymptom\tMESH\n",
+            #         "SYMP:0000149\tobsolete sudden onset of severe chills\tSymptom\tSYMP\n",
             #     ]
             # )
