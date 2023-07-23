@@ -1,9 +1,12 @@
 from typing import Type
 from ontology_matcher.disease import DiseaseOntologyFormatter, DISEASE_DICT
-from ontology_matcher.disease.types import DiseaseOntologyFileFormat
+from ontology_matcher.disease.custom_types import DiseaseOntologyFileFormat
 
 from ontology_matcher.gene import GeneOntologyFormatter, GENE_DICT
-from ontology_matcher.gene.types import GeneOntologyFileFormat
+from ontology_matcher.gene.custom_types import GeneOntologyFileFormat
+
+from ontology_matcher.symptom import SymptomOntologyFormatter, SYMPTOM_DICT
+from ontology_matcher.symptom.custom_types import SymptomOntologyFileFormat
 
 from ontology_matcher.ontology_formatter import (
     BaseOntologyFormatter,
@@ -22,7 +25,7 @@ ONTOLOGY_DICT: dict[str, Type[BaseOntologyFormatter]] = {
     # "biological_process": None,
     # "pharmacologic_class": None,
     # "side_effect": None,
-    # "symptom": None,
+    "symptom": SymptomOntologyFormatter,
     # "protein": None,
     # "metabolite": None,
 }
@@ -40,7 +43,7 @@ ONTOLOGY_TYPE_DICT: dict[str, OntologyType] = {
     # "biological_process": None,
     # "pharmacologic_class": None,
     # "side_effect": None,
-    # "symptom": None,
+    "symptom": SYMPTOM_DICT,
     # "protein": None,
     # "metabolite": None,
 }
@@ -56,7 +59,7 @@ ONTOLOGY_FILE_FORMAT_DICT: dict[str, Type[BaseOntologyFileFormat]] = {
     # "biological_process": None,
     # "pharmacologic_class": None,
     # "side_effect": None,
-    # "symptom": None,
+    "symptom": SymptomOntologyFileFormat,
     # "protein": None,
     # "metabolite": None,
 }

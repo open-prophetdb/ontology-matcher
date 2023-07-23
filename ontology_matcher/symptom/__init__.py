@@ -13,7 +13,7 @@ from ontology_matcher.ontology_formatter import (
     BaseOntologyFormatter,
     NoResultException
 )
-from ontology_matcher.symptom.types import SymptomOntologyFileFormat
+from ontology_matcher.symptom.custom_types import SymptomOntologyFileFormat
 
 # SYMP: Symptom Ontology ID, https://raw.githubusercontent.com/SymptomOntology/SymptomOntology/v2022-11-30/src/ontology/symp.owl; https://bioportal.bioontology.org/ontologies/SYMP
 # UMLS: Unified Medical Language System, https://www.nlm.nih.gov/research/umls/

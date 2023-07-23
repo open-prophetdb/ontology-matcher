@@ -13,12 +13,12 @@ from ontology_matcher.ontology_formatter import (
     BaseOntologyFormatter,
     NoResultException
 )
-from ontology_matcher.disease.types import DiseaseOntologyFileFormat
+from ontology_matcher.disease.custom_types import DiseaseOntologyFileFormat
 
 DISEASE_DICT = OntologyType(
     type="Disease",
     default="MONDO",
-    choices=["MONDO", "DOID", "MESH", "OMIM", "ICD-9", "HP", "ICD10CM", "SNOMED", "ORDO", "UMLS"],
+    choices=["MONDO", "DOID", "MESH", "OMIM", "ICD-9", "HP", "ICD10CM", "ORDO", "UMLS"],
 )
 
 
@@ -58,8 +58,10 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
             "ICD-9": "https://www.cdc.gov/nchs/icd/icd9.htm",
             "HP": "https://hpo.jax.org/app/",
             "ICD10CM": "https://www.cdc.gov/nchs/icd/icd-10-cm.htm",
-            "SNOMED": "https://www.snomed.org/",
+            # OxO Cannot support SNOMED currently. Please access https://www.ebi.ac.uk/spot/oxo/api/datasources/SNOMED to check.
+            # "SNOMED": "https://www.snomed.org/",
             "ORDO": "https://www.orpha.net/consor/cgi-bin/index.php",
+            "UMLS": "https://www.nlm.nih.gov/research/umls/",
         }
 
     def _format_response(self, response: dict, batch_ids: List[str]) -> None:

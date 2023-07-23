@@ -235,14 +235,17 @@ class BaseOntologyFormatter:
             raise Exception("The ontology converter must be specified.")
 
         self._expected_columns = [
-            vars(format).get(attr) for attr in dir(format) if not attr.startswith("__")
+            getattr(format, attr) for attr in dir(format) if not attr.startswith("__") and not callable(getattr(format, attr))
         ]
 
         self._check_format()
 
+        all_ids = self._data[format.ID].tolist()
+        
+        print(f"Total number of IDs: {len(all_ids)}")
         if dict is None:
             self._dict = ontology_converter(
-                ids=self._data[format.ID].tolist(), **kwargs
+                ids=all_ids, **kwargs
             ).convert()
         else:
             self._dict = dict

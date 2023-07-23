@@ -12,7 +12,7 @@ from ontology_matcher.ontology_formatter import (
     BaseOntologyFormatter,
     NoResultException
 )
-from ontology_matcher.gene.types import GeneOntologyFileFormat
+from ontology_matcher.gene.custom_types import GeneOntologyFileFormat
 
 default_field_dict = {
     "ENTREZ": "entrezgene",
