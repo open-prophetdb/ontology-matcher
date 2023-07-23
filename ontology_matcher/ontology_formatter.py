@@ -90,17 +90,17 @@ class OntologyBaseConverter:
         self._databases = ontology_type.choices
         self._batch_size = batch_size
         self._sleep_time = sleep_time
-        
+
         self.print_ontology_links()
 
         if self._batch_size > 500:
             raise Exception("The batch size cannot be larger than 500.")
 
         self._check_ids()
-    
+
     @property
     def ontology_links(self) -> Dict[str, str]:
-        return NotImplementedError # type: ignore
+        return NotImplementedError  # type: ignore
 
     def _check_ids(self):
         """Check if the ids are in the correct format.
@@ -170,10 +170,12 @@ class OntologyBaseConverter:
         if len(missed) > 0:
             raise Exception("Links of the following databases are missed: %s" % missed)
 
-        print("NOTICE:\nYou can find more details on the following websites (NOTICE: We don't check whether an ID is valid; we simply attempt to map it to the default ontology database we have chosen):")
+        print(
+            "NOTICE:\nYou can find more details on the following websites (NOTICE: We don't check whether an ID is valid; we simply attempt to map it to the default ontology database we have chosen):"
+        )
         for key, value in self.ontology_links.items():
             print(f"{key}: {value}")
-            
+
         print("\n")
 
     def add_converted_id(self, converted_id: Union[ConvertedId, Dict[str, str]]):
@@ -194,6 +196,34 @@ class BaseOntologyFileFormat:
     NAME = "name"
     LABEL = "label"
     RESOURCE = "resource"
+    DESCRIPTION = "description"
+    SYNONYMS = "synonyms"
+
+    @classmethod
+    def expected_columns(cls) -> List[str]:
+        """Get the expected columns.
+
+        Returns:
+            List[str]: The expected columns.
+        """
+        return [
+            cls.ID,
+            cls.NAME,
+            cls.LABEL,
+            cls.RESOURCE,
+        ]
+
+    @classmethod
+    def optional_columns(cls) -> List[str]:
+        """Get the optional columns.
+
+        Returns:
+            List[str]: The optional columns.
+        """
+        return [
+            cls.DESCRIPTION,
+            cls.SYNONYMS,
+        ]
 
     @classmethod
     def generate_template(cls, filepath: Union[str, Path]):
@@ -211,10 +241,11 @@ class BaseOntologyFormatter:
     def __init__(
         self,
         filepath: Union[str, Path],
-        format: Optional[Type[BaseOntologyFileFormat]] = None,
+        file_format_cls: Optional[Type[BaseOntologyFileFormat]] = None,
         ontology_converter: Optional[Type[OntologyBaseConverter]] = None,
         dict: Optional[ConversionResult] = None,
-        **kwargs
+        ontology_type: Optional[OntologyType] = None,
+        **kwargs,
     ) -> None:
         """Initialize the DiseaseOntologyFormatter class.
 
@@ -227,26 +258,33 @@ class BaseOntologyFormatter:
         self._data = self._read_file()
         self._formatted_data = None
         self._failed_formatted_data = None
+        self.file_format_cls = file_format_cls
+        self.ontology_type = ontology_type
 
-        if format is None:
-            raise Exception("The format must be specified.")
+        if self.file_format_cls is None:
+            raise Exception("The format_cls must be specified.")
 
         if ontology_converter is None:
             raise Exception("The ontology converter must be specified.")
+        
+        # Using a class method to get the expected columns will be more robust.
+        self._expected_columns = self.file_format_cls.expected_columns()
 
-        self._expected_columns = [
-            getattr(format, attr) for attr in dir(format) if not attr.startswith("__") and not callable(getattr(format, attr))
-        ]
+        self._optional_columns = self.file_format_cls.optional_columns()
+
+        # self._expected_columns = [
+        #     getattr(self.file_format_cls, attr)
+        #     for attr in dir(self.file_format_cls)
+        #     if not attr.startswith("__") and not callable(getattr(self.file_format_cls, attr))
+        # ]
 
         self._check_format()
 
-        all_ids = self._data[format.ID].tolist()
-        
+        all_ids = self._data[self.file_format_cls.ID].tolist()
+
         print(f"Total number of IDs: {len(all_ids)}")
         if dict is None:
-            self._dict = ontology_converter(
-                ids=all_ids, **kwargs
-            ).convert()
+            self._dict = ontology_converter(ids=all_ids, **kwargs).convert()
         else:
             self._dict = dict
 
@@ -299,6 +337,56 @@ class BaseOntologyFormatter:
                 % ", ".join(missed_columns)
             )
         return True
+    
+    def get_raw_record(self, id: str) -> pd.DataFrame:
+        """Get the raw record by id.
+
+        Args:
+            id (str): The id of the record.
+
+        Returns:
+            pd.DataFrame: The raw record.
+        """
+        records = self._data[self._data[self.file_format_cls.ID] == id]
+        if len(records) == 0:
+            raise ValueError(
+                "Cannot find the related record, please check your id. you may need to use the raw id not the converted id."
+            )
+        elif len(records) > 1:
+            return records[0]
+        else:
+            return records
+
+    @staticmethod
+    def format_record_value(record: pd.DataFrame, key: str) -> str:
+        """Format the record value.
+
+        Args:
+            record (pd.DataFrame): The record.
+            key (str): The key of the record.
+
+        Returns:
+            str: The formatted record value.
+        """
+        try:
+            return record[key].values[0]
+        except KeyError:
+            return ""
+        
+    def get_alias_ids(self, converted_id: ConvertedId) -> List[str]:
+        ids = [
+            converted_id.get(x)
+            for x in self.ontology_type.choices
+            if x != self.ontology_type.default
+        ]
+        unique_ids = []
+        for id in ids:
+            if type(id) == list:
+                unique_ids.extend(id)
+            elif type(id) == str and id not in unique_ids:
+                unique_ids.append(id)      
+
+        return unique_ids  
 
     def format(self):
         """Format the disease ontology file.
@@ -318,6 +406,10 @@ class BaseOntologyFormatter:
         Args:
             filepath (Union[str, Path]): The file path to write the formatted data. The file extension should be .tsv. Three files will be generated: the formatted data, the failed formatted data and the pickle file.
         """
+        # Check the directory whether exists, if not, create it.
+        if not Path(filepath).parent.exists():
+            Path(filepath).parent.mkdir(parents=True)
+
         if self._formatted_data is None:
             raise Exception(
                 "Cannot find the valid formatted data, maybe the format method is not called or the formatted data is empty (please check the failed_formatted_data attributes)."
@@ -342,6 +434,7 @@ class BaseOntologyFormatter:
         # Pickle the object
         with open(Path(filepath).with_suffix(".pkl"), "wb") as f:
             pickle.dump(obj, f)
+
 
 class NoResultException(Exception):
     """The exception for no result."""

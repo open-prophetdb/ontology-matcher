@@ -1,0 +1,18 @@
+id	name	description	label	resource	synonyms	xrefs	semantic_types
+MESH:C538288	10p Deletion Syndrome (Partial)		Disease	CTD			
+MESH:C579849	15q24 Microdeletion		Disease	CTD			
+MESH:C579850	16p11.2 Deletion Syndrome		Disease	CTD			
+MESH:C566487	2-Methylbutyryl-CoA Dehydrogenase Deficiency		Disease	CTD			
+OMIM:616271	3-METHYLGLUTACONIC ACIDURIA, TYPE VIIB		Disease	CTD			
+OMIM:616425	46,XY SEX REVERSAL 10		Disease	CTD			
+MESH:C567887	46,XY Sex Reversal 4		Disease	CTD			
+MESH:C537810	6q+ Syndrome, Partial		Disease	CTD			
+MESH:C579873	9q22.3 Microdeletion		Disease	CTD			
+MESH:C535332	Aase Smith syndrome		Disease	CTD			
+MESH:C535552	Abdominal chemodectomas with cutaneous angiolipomas		Disease	CTD			
+MESH:D009008	Abnormalities, Severe Teratoid	Marked developmental anomalies of a fetus or infant.	Disease	CTD			
+MESH:D000037	Abruptio Placentae	Premature separation of the normally implanted PLACENTA from the UTERUS. Signs of varying degree of severity include UTERINE BLEEDING, uterine MUSCLE HYPERTONIA, and FETAL DISTRESS or FETAL DEATH.	Disease	CTD			
+MESH:C535564	Absence of tibia with polydactyly		Disease	CTD			
+MESH:D000051	Acantholysis	Separation of the prickle cells of the stratum spinosum of the epidermis, resulting in atrophy of the prickle cell layer. It is seen in diseases such as pemphigus vulgaris (see PEMPHIGUS) and DARIER DISEASE.	Disease	CTD			
+MESH:D020642	Acatalasia	A rare autosomal recessive disorder resulting from the absence of CATALASE activity. Though usually asymptomatic, a syndrome of oral ulcerations and gangrene may be present.	Disease	CTD		
+MONDO:0009239	hypogonadotropic hypogonadism 24 without anosmia	Any hypogonadotropic hypogonadism in which the cause of the disease is a mutation in the FSHB gene.	Disease	Mondo	hypogonadotropic hypogonadism caused by mutation in FSHB|isolated follicle-stimulating hormone deficiency|FSHB hypogonadotropic hypogonadism|hypogonadotropic hypogonadism 24 without anosmia|isolated FSH deficiency|isolated follicle-stimulating hormone (FSH) deficiency|isolated follicle stimulating hormone deficiency|HH24|follicle-stimulating hormone deficiency, isolated	MESH:C537070|SCTID:758664007|Orphanet:52901|DOID:0090088|UMLS:C1856716|OMIM:229070|GARD:0010128	

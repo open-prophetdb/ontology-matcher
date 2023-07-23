@@ -2,6 +2,7 @@ import re
 import time
 import requests
 import pandas as pd
+from tenacity import retry, stop_after_attempt, wait_random
 from pathlib import Path
 from typing import Dict, Union, List, Optional
 from ontology_matcher.ontology_formatter import (
@@ -11,7 +12,7 @@ from ontology_matcher.ontology_formatter import (
     FailedId,
     OntologyBaseConverter,
     BaseOntologyFormatter,
-    NoResultException
+    NoResultException,
 )
 from ontology_matcher.disease.custom_types import DiseaseOntologyFileFormat
 
@@ -148,6 +149,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
                 if converted_id_dict:
                     self._converted_ids.append(converted_id_dict)
 
+    @retry(stop=stop_after_attempt(5), wait=wait_random(min=1, max=15))
     def _fetch_ids(self, ids) -> dict:
         """Fetch the ids from the OXO API.
 
@@ -177,6 +179,19 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
 
         return results.json()
 
+    @retry(stop=stop_after_attempt(5), wait=wait_random(min=1, max=15))
+    def _fetch_format_data(self, ids: List[str]) -> None:
+        """Fetch and format the ids.
+
+        Args:
+            ids (List[str]): A list of ids.
+
+        Returns:
+            None
+        """
+        response = self._fetch_ids(ids)
+        self._format_response(response, ids)
+
     def convert(self) -> ConversionResult:
         """Convert the ids to different databases.
 
@@ -186,8 +201,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
         # Cannot use the parallel processing, otherwise the index order will not be correct.
         for i in range(0, len(self._ids), self._batch_size):
             batch_ids = self._ids[i : i + self._batch_size]
-            response = self._fetch_ids(batch_ids)
-            self._format_response(response, batch_ids)
+            self._fetch_format_data(batch_ids)
             time.sleep(self._sleep_time)
 
         return ConversionResult(
@@ -219,9 +233,10 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
         """
         super().__init__(
             filepath,
-            format=DiseaseOntologyFileFormat,
+            file_format_cls=DiseaseOntologyFileFormat,
             ontology_converter=DiseaseOntologyConverter,
             dict=dict,
+            ontology_type=DISEASE_DICT,
             **kwargs,
         )
 
@@ -236,51 +251,56 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
 
         for converted_id in self._dict.converted_ids:
             raw_id = converted_id.get("raw_id")
-            row = self._data[self._data[DiseaseOntologyFileFormat.ID] == raw_id]
-            id = converted_id.get(DISEASE_DICT.default)
-            new_row = {key: row[key].values[0] for key in self._expected_columns}
+            id = converted_id.get(self.ontology_type.default)
+            record = self.get_raw_record(raw_id)
+            columns = self._expected_columns + self._optional_columns
+            new_row = {
+                key: self.format_record_value(record, key)
+                for key in columns
+            }
 
-            if type(id) == list and len(id) > 1:
-                new_row["aliases"] = "|".join(id)
-                row["reason"] = "Multiple results found"
+            if id is None:
+                # Keep the original record if the id does not match the default prefix.
+                unique_ids = self.get_alias_ids(converted_id)
+                new_row["xrefs"] = "|".join(unique_ids)
+                formated_data.append(new_row)
+                print("No results found for %s, %s" % (raw_id, new_row))
+            elif type(id) == list and len(id) > 1:
+                new_row["xrefs"] = "|".join(id)
+                new_row["reason"] = "Multiple results found"
                 failed_formatted_data.append(new_row)
             else:
                 if type(id) == list and len(id) == 1:
                     id = id[0]
 
-                new_row[DiseaseOntologyFileFormat.ID] = id
-                new_row[DiseaseOntologyFileFormat.RESOURCE] = DISEASE_DICT.default
-                new_row[DiseaseOntologyFileFormat.LABEL] = DISEASE_DICT.type
+                new_row["raw_id"] = raw_id
+                new_row[self.file_format_cls.ID] = id
+                new_row[self.file_format_cls.RESOURCE] = self.ontology_type.default
+                new_row[self.file_format_cls.LABEL] = self.ontology_type.type
 
-                ids = [
-                    converted_id.get(x)
-                    for x in DISEASE_DICT.choices
-                    if x != DISEASE_DICT.default
-                ]
-                unique_ids = []
-                for id in ids:
-                    if type(id) == list:
-                        unique_ids.extend(id)
-                    elif type(id) == str and id not in unique_ids:
-                        unique_ids.append(id)
-
-                new_row["aliases"] = "|".join(unique_ids)
+                unique_ids = self.get_alias_ids(converted_id)
+                new_row["xrefs"] = "|".join(unique_ids)
 
                 formated_data.append(new_row)
 
         for failed_id in self._dict.failed_ids:
             id = failed_id.id
             prefix, value = id.split(":")
-            row = self._data[self._data[DiseaseOntologyFileFormat.ID] == id]
-            new_row = {key: row[key].values[0] for key in self._expected_columns}
-            new_row[DiseaseOntologyFileFormat.ID] = id
-            new_row[DiseaseOntologyFileFormat.LABEL] = DISEASE_DICT.type
-            new_row[DiseaseOntologyFileFormat.RESOURCE] = prefix
-            new_row["aliases"] = ""
+            record = self.get_raw_record(id)
+            columns = self._expected_columns + self._optional_columns
+            new_row = {
+                key: self.format_record_value(record, key)
+                for key in columns
+            }
+            new_row[self.file_format_cls.ID] = id
+            new_row[self.file_format_cls.LABEL] = self.ontology_type.type
+            new_row[self.file_format_cls.RESOURCE] = prefix
+            new_row["xrefs"] = ""
 
             # Keep the original record if the id match the default prefix.
+            # If we allow the mixture strategy, we will keep the original record even if the id does not match the default prefix. So we don't have the failed data to return.
             if (
-                prefix == DISEASE_DICT.default
+                prefix == self.ontology_type.default
                 or self._dict.strategy == Strategy.MIXTURE
             ):
                 formated_data.append(new_row)
@@ -310,7 +330,7 @@ if __name__ == "__main__":
         "SNOMED:254637007",
         "HP:0030358",
         "ORDO:94063",
-        "UMLS:C0007131"
+        "UMLS:C0007131",
     ]
     disease = DiseaseOntologyConverter(ids)
     result = disease.convert()

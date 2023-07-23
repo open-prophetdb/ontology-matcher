@@ -11,7 +11,7 @@ from ontology_matcher.ontology_formatter import (
     FailedId,
     OntologyBaseConverter,
     BaseOntologyFormatter,
-    NoResultException
+    NoResultException,
 )
 from ontology_matcher.symptom.custom_types import SymptomOntologyFileFormat
 
@@ -22,6 +22,7 @@ from ontology_matcher.symptom.custom_types import SymptomOntologyFileFormat
 SYMPTOM_DICT = OntologyType(
     type="Symptom", default="MESH", choices=["MESH", "SYMP", "UMLS"]
 )
+
 
 class SymptomOntologyConverter(OntologyBaseConverter):
     """Convert the symptom id to a standard format for the knowledge graph."""
@@ -48,14 +49,14 @@ class SymptomOntologyConverter(OntologyBaseConverter):
         # More details on the database_url can be found here: https://www.ebi.ac.uk/spot/oxo/index
         self._database_url = "https://www.ebi.ac.uk/spot/oxo/api/search"
         print("The formatter will use the OXO API to convert the symptom ids.")
-        
+
     @property
     def ontology_links(self) -> Dict[str, str]:
         return {
             "UMLS": "https://www.nlm.nih.gov/research/umls/",
             "MESH": "https://www.nlm.nih.gov/mesh/",
             "SYMP": "https://bioportal.bioontology.org/ontologies/SYMP",
-        }    
+        }
 
     def _format_response(self, response: dict, batch_ids: List[str]) -> None:
         """Format the response from the OXO API.
@@ -212,9 +213,10 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
         """
         super().__init__(
             filepath,
-            format=SymptomOntologyFileFormat,
+            file_format_cls=SymptomOntologyFileFormat,
             ontology_converter=SymptomOntologyConverter,
             dict=dict,
+            ontology_type=SYMPTOM_DICT,
             **kwargs,
         )
 
@@ -229,51 +231,53 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
 
         for converted_id in self._dict.converted_ids:
             raw_id = converted_id.get("raw_id")
-            row = self._data[self._data[SymptomOntologyFileFormat.ID] == raw_id]
             id = converted_id.get(SYMPTOM_DICT.default)
-            new_row = {key: row[key].values[0] for key in self._expected_columns}
+            record = self.get_raw_record(raw_id)
+            columns = self._expected_columns + self._optional_columns
+            new_row = {
+                key: self.format_record_value(record, key)
+                for key in columns
+            }
 
-            if type(id) == list and len(id) > 1:
-                new_row["aliases"] = "|".join(id)
-                row["reason"] = "Multiple results found"
+            if id is None:
+                # Keep the original record if the id does not match the default prefix.
+                unique_ids = self.get_alias_ids(converted_id)
+                new_row["xrefs"] = "|".join(unique_ids)
+                formated_data.append(new_row)
+            elif type(id) == list and len(id) > 1:
+                new_row["xrefs"] = "|".join(id)
+                new_row["reason"] = "Multiple results found"
                 failed_formatted_data.append(new_row)
             else:
                 if type(id) == list and len(id) == 1:
                     id = id[0]
 
-                new_row[SymptomOntologyFileFormat.ID] = id
-                new_row[SymptomOntologyFileFormat.RESOURCE] = SYMPTOM_DICT.default
-                new_row[SymptomOntologyFileFormat.LABEL] = SYMPTOM_DICT.type
+                new_row[self.file_format_cls.ID] = id
+                new_row[self.file_format_cls.RESOURCE] = self.ontology_type.default
+                new_row[self.file_format_cls.LABEL] = self.ontology_type.type
 
-                ids = [
-                    converted_id.get(x)
-                    for x in SYMPTOM_DICT.choices
-                    if x != SYMPTOM_DICT.default
-                ]
-                unique_ids = []
-                for id in ids:
-                    if type(id) == list:
-                        unique_ids.extend(id)
-                    elif type(id) == str and id not in unique_ids:
-                        unique_ids.append(id)
-
-                new_row["aliases"] = "|".join(unique_ids)
+                unique_ids = self.get_alias_ids(converted_id)
+                new_row["xrefs"] = "|".join(unique_ids)
 
                 formated_data.append(new_row)
 
         for failed_id in self._dict.failed_ids:
             id = failed_id.id
             prefix, value = id.split(":")
-            row = self._data[self._data[SymptomOntologyFileFormat.ID] == id]
-            new_row = {key: row[key].values[0] for key in self._expected_columns}
-            new_row[SymptomOntologyFileFormat.ID] = id
-            new_row[SymptomOntologyFileFormat.LABEL] = SYMPTOM_DICT.type
-            new_row[SymptomOntologyFileFormat.RESOURCE] = prefix
-            new_row["aliases"] = ""
+            record = self.get_raw_record(id)
+            columns = self._expected_columns + self._optional_columns
+            new_row = {
+                key: self.format_record_value(record, key)
+                for key in columns
+            }
+            new_row[self.file_format_cls.ID] = id
+            new_row[self.file_format_cls.LABEL] = self.ontology_type.type
+            new_row[self.file_format_cls.RESOURCE] = prefix
+            new_row["xrefs"] = ""
 
             # Keep the original record if the id match the default prefix.
             if (
-                prefix == SYMPTOM_DICT.default
+                prefix == self.ontology_type.default
                 or self._dict.strategy == Strategy.MIXTURE
             ):
                 formated_data.append(new_row)

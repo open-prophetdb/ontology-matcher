@@ -10,7 +10,7 @@ from ontology_matcher.ontology_formatter import (
     FailedId,
     OntologyBaseConverter,
     BaseOntologyFormatter,
-    NoResultException
+    NoResultException,
 )
 from ontology_matcher.gene.custom_types import GeneOntologyFileFormat
 
@@ -234,9 +234,10 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
         """
         super().__init__(
             filepath,
-            format=GeneOntologyFileFormat,
+            file_format_cls=GeneOntologyFileFormat,
             ontology_converter=GeneOntologyConverter,
             dict=dict,
+            ontology_type=GENE_DICT,
             **kwargs,
         )
 
@@ -251,50 +252,53 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
 
         for converted_id in self._dict.converted_ids:
             raw_id = converted_id.get("raw_id")
-            row = self._data[self._data[GeneOntologyFileFormat.ID] == raw_id]
-            id = converted_id.get(GENE_DICT.default)
-            new_row = {key: row[key].values[0] for key in self._expected_columns}
+            id = converted_id.get(self.ontology_type.default)
+            record = self.get_raw_record(raw_id)
+            columns = self._expected_columns + self._optional_columns
+            new_row = {
+                key: self.format_record_value(record, key)
+                for key in columns
+            }
 
-            if type(id) == list and len(id) > 1:
-                new_row["aliases"] = "|".join(id)
-                row["reason"] = "Multiple results found"
+            if id is None:
+                # Keep the original record if the id does not match the default prefix.
+                unique_ids = self.get_alias_ids(converted_id)
+                new_row["xrefs"] = "|".join(unique_ids)
+                formated_data.append(new_row)
+            elif type(id) == list and len(id) > 1:
+                new_row["xrefs"] = "|".join(id)
+                new_row["reason"] = "Multiple results found"
                 failed_formatted_data.append(new_row)
             else:
                 if type(id) == list and len(id) == 1:
                     id = id[0]
 
-                new_row[GeneOntologyFileFormat.ID] = id
-                new_row[GeneOntologyFileFormat.RESOURCE] = GENE_DICT.default
-                new_row[GeneOntologyFileFormat.LABEL] = GENE_DICT.type
+                new_row["raw_id"] = raw_id
+                new_row[self.file_format_cls.ID] = id
+                new_row[self.file_format_cls.RESOURCE] = self.ontology_type.default
+                new_row[self.file_format_cls.LABEL] = self.ontology_type.type
 
-                ids = [
-                    converted_id.get(x)
-                    for x in GENE_DICT.choices
-                    if x != GENE_DICT.default
-                ]
-                unique_ids = []
-                for id in ids:
-                    if type(id) == list:
-                        unique_ids.extend(id)
-                    elif type(id) == str and id not in unique_ids:
-                        unique_ids.append(id)
-
-                new_row["aliases"] = "|".join(unique_ids)
+                unique_ids = self.get_alias_ids(converted_id)
+                new_row["xrefs"] = "|".join(unique_ids)
 
                 formated_data.append(new_row)
 
         for failed_id in self._dict.failed_ids:
             id = failed_id.id
             prefix, value = id.split(":")
-            row = self._data[self._data[GeneOntologyFileFormat.ID] == id]
-            new_row = {key: row[key].values[0] for key in self._expected_columns}
-            new_row[GeneOntologyFileFormat.ID] = id
-            new_row[GeneOntologyFileFormat.LABEL] = GENE_DICT.type
-            new_row[GeneOntologyFileFormat.RESOURCE] = prefix
-            new_row["aliases"] = ""
+            record = self.get_raw_record(id)
+            columns = self._expected_columns.extend(self._optional_columns)
+            new_row = {
+                key: self.format_record_value(record, key)
+                for key in columns
+            }
+            new_row[self.file_format_cls.ID] = id
+            new_row[self.file_format_cls.LABEL] = self.ontology_type.type
+            new_row[self.file_format_cls.RESOURCE] = prefix
+            new_row["xrefs"] = ""
 
             # Keep the original record if the id match the default prefix.
-            if prefix == GENE_DICT.default or self._dict.strategy == Strategy.MIXTURE:
+            if prefix == self.ontology_type.default or self._dict.strategy == Strategy.MIXTURE:
                 formated_data.append(new_row)
             else:
                 new_row["reason"] = failed_id.reason
