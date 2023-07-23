@@ -198,6 +198,7 @@ class BaseOntologyFileFormat:
     RESOURCE = "resource"
     DESCRIPTION = "description"
     SYNONYMS = "synonyms"
+    PMIDS = "pmids"
 
     @classmethod
     def expected_columns(cls) -> List[str]:
@@ -223,6 +224,7 @@ class BaseOntologyFileFormat:
         return [
             cls.DESCRIPTION,
             cls.SYNONYMS,
+            cls.PMIDS
         ]
 
     @classmethod
