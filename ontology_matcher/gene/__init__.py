@@ -1,5 +1,5 @@
 import time
-import mygene
+from ontology_matcher.apis import MyGene
 import pandas as pd
 from pathlib import Path
 from typing import Union, List, Optional, Dict
@@ -17,7 +17,8 @@ from ontology_matcher.gene.custom_types import GeneOntologyFileFormat
 default_field_dict = {
     "ENTREZ": "entrezgene",
     "ENSEMBL": "ensembl.gene",
-    "HGNC": "HGNC",  # It's not consistent with the mygene API. but it's the only way to get the HGNC id.
+    "HGNC": "HGNC",
+    "MGI": "MGI",
     "SYMBOL": "symbol",
 }
 
@@ -25,6 +26,9 @@ default_field_dict = {
 additional_fields = [
     "name",
     "taxid",
+    "alias",
+    "summary",
+    "other_names",
 ]
 
 GENE_DICT = OntologyType(
@@ -59,7 +63,6 @@ class GeneOntologyConverter(OntologyBaseConverter):
         )
 
         self._database_url = "https://mygene.info"
-        self._mygene = mygene.MyGeneInfo()
         print(
             "The formatter will use the mygene API (%s) to convert gene ids."
             % self._database_url
@@ -72,6 +75,7 @@ class GeneOntologyConverter(OntologyBaseConverter):
             "ENSEMBL": "http://useast.ensembl.org/index.html",
             "HGNC": "https://www.genenames.org",
             "SYMBOL": "https://www.genenames.org",
+            "MGI": "http://www.informatics.jax.org",
         }
 
     def _format_response(
@@ -96,6 +100,23 @@ class GeneOntologyConverter(OntologyBaseConverter):
             "Batch size: %s, results size: %s"
             % (len(batch_ids), search_results.shape[0])
         )
+
+        def flatten_dedup(nested_list):
+            flat_list = []
+            for sublist in nested_list:
+                if isinstance(sublist, list):
+                    flat_list.extend(sublist)
+                else:
+                    flat_list.append(sublist)
+            return list(set(flat_list))
+
+        def list_or_str(x):
+            x = list(set(x))
+            if type(x) == list and len(x) == 1:
+                return x[0]
+            else:
+                return x
+
         for index, id in enumerate(batch_ids):
             prefix, value = id.split(":")
             if prefix not in self.databases:
@@ -107,15 +128,26 @@ class GeneOntologyConverter(OntologyBaseConverter):
                 self._failed_ids.append(failed_id)
                 continue
 
-            result = search_results.iloc[index].to_dict()
+            result = search_results[search_results[prefix] == value]
+
             converted_id_dict = {}
             converted_id_dict[prefix] = id
             converted_id_dict["raw_id"] = id
+            converted_id_dict["metadata"] = (
+                result.to_dict(orient="records")[0] if result.empty is False else None
+            )
+
             difference = [x for x in self.databases if x != prefix]
             for choice in difference:
-                matched = result.get(choice, None)
+                try:
+                    matched = flatten_dedup(result.loc[:, choice].tolist())
+                except KeyError:
+                    matched = None
+
                 if matched:
-                    converted_id_dict[choice] = matched
+                    converted_id_dict[choice] = list_or_str(
+                        map(lambda x: f"{choice}:{x}" if choice != "MGI" and x is not None else x, matched)
+                    )
                     converted_id_dict["idx"] = index
 
                     if choice == self.default_database and len(matched) > 1:
@@ -155,7 +187,8 @@ class GeneOntologyConverter(OntologyBaseConverter):
         id_lst = [
             [id.split(":")[0], id.split(":")[1], idx] for (idx, id) in enumerate(ids)
         ]
-        # Group the ids by the prefix.
+
+        # Group the ids by the prefix. such as {'ENTREZ': ['7157', '7158'], 'ENSEMBL': ['ENSG00000141510'], 'HGNC': ['11892']}
         id_dict = {}
         id_idx_dict = {}
         for id in id_lst:
@@ -163,25 +196,51 @@ class GeneOntologyConverter(OntologyBaseConverter):
                 id_dict[id[0]] = []
             id_dict[id[0]].append(id[1])
             # The id maybe same, such as HGNC:1 and ENTREZ:1. So we need to use full id as the key.
-            id_idx_dict[f"{id[0]:id[1]}"] = id[2]
+            id_idx_dict[f"{id[0]}:{id[1]}"] = id[2]
 
+        # Groups may be similar to ['ENTREZ', 'ENSEMBL', 'HGNC']
         groups = id_dict.keys()
+
+        # Check all scopes are valid.
+        for scope in id_dict.keys():
+            if scope not in self.databases:
+                raise ValueError("Invalid prefix, only support %s" % self.databases)
+
         all_results = []
         for group in groups:
             ids = id_dict[group]
             scope = get_scope(group)
+            # All fields information: http://mygene.info/v3/gene/1017
             default_fields = list(default_field_dict.values()) + additional_fields
-            results = self._mygene.getgenes(
-                ids, fields=",".join(default_fields), as_dataframe=True, scopes=scope
+
+            # For more details on the mygene API, please refer to https://docs.mygene.info/en/latest/doc/query_service.html
+            if scope == "MGI":
+                # The MGI id should be MGI:MGI:1342288, so we need to add the prefix.
+                ids = [f"MGI:{x}" for x in ids]
+
+            request = MyGene(
+                q=",".join(ids), scopes=scope, fields=default_fields, dotfield=True
             )
+            results = request.parse()
+
+            results = pd.DataFrame(results, dtype=str)
+            # We don't like nan, so we need to convert it to None.
+            results = results.where(pd.notnull(results), None)
+
             # MyGene will return the following columns:
-            # _id,_version,entrezgene,name,symbol,taxid,ensembl.gene,HGNC
+            # _id,_version,entrezgene,name,symbol,taxid,ensembl.gene,HGNC,summary,alias,query,MGI,other_names
 
             # We need to keep the original order for matching the row number of user's input file.
-            results["idx"] = results["_id"].apply(lambda x: id_idx_dict[f"{group}:{x}"])
+            if scope == "MGI":
+                # The MGI id should be MGI:MGI:1342288, so we need to remove the prefix.
+                results["query"] = results["query"].apply(lambda x: x.split(":")[1])
+
+            results["idx"] = results["query"].apply(
+                lambda x: id_idx_dict[f"{group}:{x}"]
+            )
 
             # Add the prefix to the id for the following processing.
-            results["id"] = results["_id"].apply(lambda x: f"{group}:{x}")
+            results["id"] = results["query"].apply(lambda x: f"{group}:{x}")
             all_results.append(results)
 
         all_results = pd.concat(all_results).sort_values(by="idx", ascending=True)
@@ -250,23 +309,55 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
         formated_data = []
         failed_formatted_data = []
 
+        def format_synonyms(
+            alias: List[str] | float | str | None,
+            other_names: List[str] | float | str | None,
+        ):
+            synonyms = []
+            if type(alias) == str:
+                synonyms.append(alias)
+
+            if type(other_names) == str:
+                synonyms.append(other_names)
+
+            if type(alias) == list:
+                synonyms.extend(alias)
+
+            if type(other_names) == list:
+                synonyms.extend(other_names)
+
+            synonyms = list(set(synonyms))
+
+        def format_by_metadata(new_row: Dict, metadata: Dict):
+            new_row[self.file_format_cls.NAME] = metadata.get("name")
+            new_row[self.file_format_cls.TAXID] = metadata.get("taxid")
+            new_row[self.file_format_cls.DESCRIPTION] = metadata.get("summary")
+            alias = metadata.get("alias")
+            other_names = metadata.get("other_names")
+            synonyms = format_synonyms(alias, other_names)
+
+            new_row[self.file_format_cls.SYNONYMS] = synonyms
+            return new_row
+
         for converted_id in self._dict.converted_ids:
             raw_id = converted_id.get("raw_id")
             id = converted_id.get(self.ontology_type.default)
             record = self.get_raw_record(raw_id)
             columns = self._expected_columns + self._optional_columns
-            new_row = {
-                key: self.format_record_value(record, key)
-                for key in columns
-            }
+            new_row = {key: self.format_record_value(record, key) for key in columns}
+
+            metadata = converted_id.get("metadata")
+
+            if metadata:
+                new_row = format_by_metadata(new_row, metadata)
 
             if id is None:
                 # Keep the original record if the id does not match the default prefix.
                 unique_ids = self.get_alias_ids(converted_id)
-                new_row["xrefs"] = "|".join(unique_ids)
+                new_row[self.file_format_cls.XREFS] = "|".join(unique_ids)
                 formated_data.append(new_row)
             elif type(id) == list and len(id) > 1:
-                new_row["xrefs"] = "|".join(id)
+                new_row[self.file_format_cls.XREFS] = "|".join(id)
                 new_row["reason"] = "Multiple results found"
                 failed_formatted_data.append(new_row)
             else:
@@ -279,7 +370,7 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
                 new_row[self.file_format_cls.LABEL] = self.ontology_type.type
 
                 unique_ids = self.get_alias_ids(converted_id)
-                new_row["xrefs"] = "|".join(unique_ids)
+                new_row[self.file_format_cls.XREFS] = "|".join(unique_ids)
 
                 formated_data.append(new_row)
 
@@ -288,17 +379,17 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
             prefix, value = id.split(":")
             record = self.get_raw_record(id)
             columns = self._expected_columns.extend(self._optional_columns)
-            new_row = {
-                key: self.format_record_value(record, key)
-                for key in columns
-            }
+            new_row = {key: self.format_record_value(record, key) for key in columns}
             new_row[self.file_format_cls.ID] = id
             new_row[self.file_format_cls.LABEL] = self.ontology_type.type
             new_row[self.file_format_cls.RESOURCE] = prefix
-            new_row["xrefs"] = ""
+            new_row[self.file_format_cls.XREFS] = ""
 
             # Keep the original record if the id match the default prefix.
-            if prefix == self.ontology_type.default or self._dict.strategy == Strategy.MIXTURE:
+            if (
+                prefix == self.ontology_type.default
+                or self._dict.strategy == Strategy.MIXTURE
+            ):
                 formated_data.append(new_row)
             else:
                 new_row["reason"] = failed_id.reason
@@ -314,7 +405,22 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
 
 
 if __name__ == "__main__":
-    ids = ["ENTREZ:7157", "ENTREZ:7158", "ENSEMBL:ENSG00000141510", "HGNC:11892"]
+    ids = [
+        "ENTREZ:7157",
+        "ENTREZ:7158",
+        "ENSEMBL:ENSG00000141510",
+        "HGNC:11892",
+        "SYMBOL:NOTFOUND",
+        "HGNC:NOTFOUND",
+        "SYMBOL:TP53",
+        "MGI:1342288",
+    ]
     gene = GeneOntologyConverter(ids)
     result = gene.convert()
     print(result)
+
+    example_file = Path(__file__).parent.parent.parent / "examples" / "gene.tsv"
+    gene_formatter = GeneOntologyFormatter(example_file)
+    gene_formatter.format()
+    gene_formatter.write("/tmp/gene_output.tsv")
+    print("You can find the output file at /tmp/gene_output.tsv")

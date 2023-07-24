@@ -42,6 +42,7 @@ class FailedId:
 class ConvertedId:
     idx: int
     raw_id: str
+    metadata: Dict[str, str] | None
 
     def get(self, key: str) -> Optional[Union[str, int]]:
         return getattr(self, key, None)
@@ -199,6 +200,8 @@ class BaseOntologyFileFormat:
     DESCRIPTION = "description"
     SYNONYMS = "synonyms"
     PMIDS = "pmids"
+    TAXID = "taxid"
+    XREFS = "xrefs"
 
     @classmethod
     def expected_columns(cls) -> List[str]:
@@ -224,7 +227,9 @@ class BaseOntologyFileFormat:
         return [
             cls.DESCRIPTION,
             cls.SYNONYMS,
-            cls.PMIDS
+            cls.PMIDS,
+            cls.TAXID,
+            cls.XREFS,
         ]
 
     @classmethod

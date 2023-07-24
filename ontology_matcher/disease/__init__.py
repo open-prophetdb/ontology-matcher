@@ -262,11 +262,11 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
             if id is None:
                 # Keep the original record if the id does not match the default prefix.
                 unique_ids = self.get_alias_ids(converted_id)
-                new_row["xrefs"] = "|".join(unique_ids)
+                new_row[self.file_format_cls.XREFS] = "|".join(unique_ids)
                 formated_data.append(new_row)
                 print("No results found for %s, %s" % (raw_id, new_row))
             elif type(id) == list and len(id) > 1:
-                new_row["xrefs"] = "|".join(id)
+                new_row[self.file_format_cls.XREFS] = "|".join(id)
                 new_row["reason"] = "Multiple results found"
                 failed_formatted_data.append(new_row)
             else:
@@ -279,7 +279,7 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
                 new_row[self.file_format_cls.LABEL] = self.ontology_type.type
 
                 unique_ids = self.get_alias_ids(converted_id)
-                new_row["xrefs"] = "|".join(unique_ids)
+                new_row[self.file_format_cls.XREFS] = "|".join(unique_ids)
 
                 formated_data.append(new_row)
 
@@ -295,7 +295,7 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
             new_row[self.file_format_cls.ID] = id
             new_row[self.file_format_cls.LABEL] = self.ontology_type.type
             new_row[self.file_format_cls.RESOURCE] = prefix
-            new_row["xrefs"] = ""
+            new_row[self.file_format_cls.XREFS] = ""
 
             # Keep the original record if the id match the default prefix.
             # If we allow the mixture strategy, we will keep the original record even if the id does not match the default prefix. So we don't have the failed data to return.
