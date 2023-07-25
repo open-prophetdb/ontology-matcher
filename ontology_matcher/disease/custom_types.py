@@ -1,5 +1,5 @@
 from pathlib import Path
-from ..ontology_formatter import BaseOntologyFileFormat
+from ontology_matcher.ontology_formatter import BaseOntologyFileFormat
 
 
 class DiseaseOntologyFileFormat(BaseOntologyFileFormat):

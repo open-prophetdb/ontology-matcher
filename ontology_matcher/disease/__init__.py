@@ -274,7 +274,7 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
                     id = id[0]
 
                 new_row["raw_id"] = raw_id
-                new_row[self.file_format_cls.ID] = id
+                new_row[self.file_format_cls.ID] = str(id)
                 new_row[self.file_format_cls.RESOURCE] = self.ontology_type.default
                 new_row[self.file_format_cls.LABEL] = self.ontology_type.type
 

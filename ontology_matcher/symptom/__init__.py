@@ -20,7 +20,7 @@ from ontology_matcher.symptom.custom_types import SymptomOntologyFileFormat
 # MESH: Medical Subject Headings, https://www.nlm.nih.gov/mesh/
 
 SYMPTOM_DICT = OntologyType(
-    type="Symptom", default="MESH", choices=["MESH", "SYMP", "UMLS"]
+    type="Symptom", default="SYMP", choices=["SYMP", "MESH", "UMLS"]
 )
 
 
@@ -252,7 +252,7 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
                 if type(id) == list and len(id) == 1:
                     id = id[0]
 
-                new_row[self.file_format_cls.ID] = id
+                new_row[self.file_format_cls.ID] = str(id)
                 new_row[self.file_format_cls.RESOURCE] = self.ontology_type.default
                 new_row[self.file_format_cls.LABEL] = self.ontology_type.type
 

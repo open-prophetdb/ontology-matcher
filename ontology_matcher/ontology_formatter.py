@@ -2,7 +2,7 @@ import re
 import pickle
 import pandas as pd
 from dataclasses import dataclass
-from typing import List, Dict, Union, Optional, Type
+from typing import List, Dict, Union, Optional, Type, Any
 from enum import Enum
 from pathlib import Path
 
@@ -44,8 +44,44 @@ class ConvertedId:
     raw_id: str
     metadata: Dict[str, str] | None
 
-    def get(self, key: str) -> Optional[Union[str, int]]:
-        return getattr(self, key, None)
+    def __new__(cls, *args, **kwargs):
+        try:
+            initializer = cls.__initializer
+        except AttributeError:
+            # Store the original init on the class in a different place
+            cls.__initializer = initializer = cls.__init__
+            # replace init with something harmless
+            cls.__init__ = lambda *a, **k: None
+
+        # code from adapted from Arne
+        added_args = {}
+        for name in list(kwargs.keys()):
+            if name not in cls.__annotations__:
+                added_args[name] = kwargs.pop(name)
+
+        ret = object.__new__(cls)
+        initializer(ret, **kwargs) # type: ignore
+        # ... and add the new ones by hand
+        for new_name, new_val in added_args.items():
+            setattr(ret, new_name, new_val)
+
+        return ret
+
+    def get_idx(self) -> int:
+        return getattr(self, 'idx')
+    
+    def get_raw_id(self) -> str:
+        return getattr(self, 'raw_id')
+    
+    def get_metadata(self) -> Dict[str, str] | None:
+        return getattr(self, 'metadata')
+    
+    def get(self, key: str) -> Any:
+        func = getattr(self, "get_%s" % key)
+        if func is None:
+            raise Exception("The key %s is not supported." % key)
+
+        return func()
 
 
 @dataclass
@@ -53,7 +89,7 @@ class ConversionResult:
     ids: List[str]
     strategy: Strategy
     default_database: str
-    converted_ids: List[Union[ConvertedId, Dict[str, str]]]
+    converted_ids: List[ConvertedId]
     databases: List[str]
     database_url: Optional[str]
     failed_ids: List[FailedId]
@@ -248,10 +284,10 @@ class BaseOntologyFormatter:
     def __init__(
         self,
         filepath: Union[str, Path],
-        file_format_cls: Optional[Type[BaseOntologyFileFormat]] = None,
+        file_format_cls: Type[BaseOntologyFileFormat],
+        ontology_type: OntologyType,
         ontology_converter: Optional[Type[OntologyBaseConverter]] = None,
         dict: Optional[ConversionResult] = None,
-        ontology_type: Optional[OntologyType] = None,
         **kwargs,
     ) -> None:
         """Initialize the DiseaseOntologyFormatter class.
@@ -360,7 +396,7 @@ class BaseOntologyFormatter:
                 "Cannot find the related record, please check your id. you may need to use the raw id not the converted id."
             )
         elif len(records) > 1:
-            return records[0]
+            return pd.DataFrame(records[0])
         else:
             return records
 

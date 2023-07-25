@@ -2,7 +2,7 @@ import time
 from ontology_matcher.apis import MyGene
 import pandas as pd
 from pathlib import Path
-from typing import Union, List, Optional, Dict
+from typing import Union, List, Optional, Dict, Any
 from ontology_matcher.ontology_formatter import (
     OntologyType,
     Strategy,
@@ -146,7 +146,12 @@ class GeneOntologyConverter(OntologyBaseConverter):
 
                 if matched:
                     converted_id_dict[choice] = list_or_str(
-                        map(lambda x: f"{choice}:{x}" if choice != "MGI" and x is not None else x, matched)
+                        map(
+                            lambda x: f"{choice}:{x}"
+                            if choice != "MGI" and x is not None
+                            else x,
+                            matched,
+                        )
                     )
                     converted_id_dict["idx"] = index
 
@@ -328,7 +333,7 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
 
             synonyms = list(set(synonyms))
 
-        def format_by_metadata(new_row: Dict, metadata: Dict):
+        def format_by_metadata(new_row: Dict[str, Any], metadata: Dict[str, Any]) -> Dict[str, Any]:
             new_row[self.file_format_cls.NAME] = metadata.get("name")
             new_row[self.file_format_cls.TAXID] = metadata.get("taxid")
             new_row[self.file_format_cls.DESCRIPTION] = metadata.get("summary")
@@ -340,13 +345,13 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
             return new_row
 
         for converted_id in self._dict.converted_ids:
-            raw_id = converted_id.get("raw_id")
+            raw_id = converted_id.get_raw_id()
             id = converted_id.get(self.ontology_type.default)
             record = self.get_raw_record(raw_id)
             columns = self._expected_columns + self._optional_columns
             new_row = {key: self.format_record_value(record, key) for key in columns}
 
-            metadata = converted_id.get("metadata")
+            metadata = converted_id.get_metadata()
 
             if metadata:
                 new_row = format_by_metadata(new_row, metadata)
@@ -365,7 +370,7 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
                     id = id[0]
 
                 new_row["raw_id"] = raw_id
-                new_row[self.file_format_cls.ID] = id
+                new_row[self.file_format_cls.ID] = str(id)
                 new_row[self.file_format_cls.RESOURCE] = self.ontology_type.default
                 new_row[self.file_format_cls.LABEL] = self.ontology_type.type
 
@@ -378,7 +383,7 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
             id = failed_id.id
             prefix, value = id.split(":")
             record = self.get_raw_record(id)
-            columns = self._expected_columns.extend(self._optional_columns)
+            columns = self._expected_columns + self._optional_columns
             new_row = {key: self.format_record_value(record, key) for key in columns}
             new_row[self.file_format_cls.ID] = id
             new_row[self.file_format_cls.LABEL] = self.ontology_type.type
