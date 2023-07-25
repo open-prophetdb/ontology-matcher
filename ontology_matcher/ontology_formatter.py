@@ -67,6 +67,13 @@ class ConvertedId:
             setattr(ret, new_name, new_val)
 
         return ret
+    
+    def update_metadata(self, metadata: Dict[str, str]):
+        for key in metadata.keys():
+            if not self.metadata:
+                self.metadata = {}
+
+            self.metadata[key] = metadata[key]
 
     def get_idx(self) -> int:
         return getattr(self, "idx")
@@ -84,7 +91,39 @@ class ConvertedId:
             return getattr(self, key)
 
         return func()
+    
+@dataclass
+class GroupedIds:
+    id_dict: Dict[str, List[str]]
+    id_idx_dict: Dict[str, int]
 
+
+def make_grouped_ids(ids: List[str]):
+    id_lst = [
+        [id.split(":")[0], id.split(":")[1], idx] for (idx, id) in enumerate(ids)
+    ]
+
+    # Group the ids by the prefix. such as {'ENTREZ': ['7157', '7158'], 'ENSEMBL': ['ENSG00000141510'], 'HGNC': ['11892']}
+    id_dict: Dict[str, List[str]] = {}
+    id_idx_dict: Dict[str, int] = {}
+    for id in id_lst:
+        if id[0] not in id_dict:
+            id_dict[id[0]] = []
+        id_dict[id[0]].append(id[1])
+        # The id maybe same, such as HGNC:1 and ENTREZ:1. So we need to use full id as the key and the related index as the value for indexing and reordering the results.
+        id_idx_dict[f"{id[0]}:{id[1]}"] = id[2]
+
+    return GroupedIds(id_dict, id_idx_dict)
+
+
+def flatten_dedup(nested_list: List[List[str] | str]) -> List[str]:
+    flat_list = []
+    for sublist in nested_list:
+        if isinstance(sublist, list):
+            flat_list.extend(sublist)
+        else:
+            flat_list.append(sublist)
+    return list(set(flat_list))
 
 @dataclass
 class ConversionResult:
@@ -124,8 +163,8 @@ class OntologyBaseConverter:
         self._ids = ids
         self._strategy = strategy
         self._default_database = ontology_type.default
-        self._failed_ids = []
-        self._converted_ids = []
+        self._failed_ids: List[FailedId] = []
+        self._converted_ids: List[ConvertedId] = []
         self._databases = ontology_type.choices
         self._batch_size = batch_size
         self._sleep_time = sleep_time

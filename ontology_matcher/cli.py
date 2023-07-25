@@ -1,4 +1,7 @@
 import click
+import logging
+import coloredlogs
+import verboselogs
 from typing import Type, Union
 from ontology_matcher import (
     ONTOLOGY_DICT,
@@ -8,6 +11,9 @@ from ontology_matcher import (
     ONTOLOGY_FILE_FORMAT_DICT,
 )
 
+verboselogs.install()
+coloredlogs.install(fmt='%(asctime)s - %(module)s:%(lineno)d - %(levelname)s - %(message)s')
+logger = logging.getLogger('cli')
 
 cli = click.Group()
 

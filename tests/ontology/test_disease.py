@@ -1,9 +1,12 @@
 # Unittest for disease.py
 
 import unittest
+import logging
 from unittest.mock import patch, MagicMock
 from ontology_matcher.disease import DiseaseOntologyFormatter, DiseaseOntologyConverter
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Test DiseaseOntologyConverter
 class TestDiseaseOntologyConverter(unittest.TestCase):

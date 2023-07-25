@@ -4,7 +4,8 @@ import requests
 import pandas as pd
 from tenacity import retry, stop_after_attempt, wait_random
 from pathlib import Path
-from typing import Dict, Union, List, Optional
+from typing import Dict, Union, List, Optional, Any
+from ontology_matcher.apis import MyDisease
 from ontology_matcher.ontology_formatter import (
     OntologyType,
     Strategy,
@@ -106,6 +107,8 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
                 converted_id_dict = {}
                 converted_id_dict[prefix] = id
                 converted_id_dict["raw_id"] = id
+                # OxO don't provide any metadata for the disease ontology. So we will update the metadata later by using the OLS API.
+                converted_id_dict["metadata"] = None
                 difference = [x for x in self.databases if x != prefix]
                 for choice in difference:
                     # The prefix maybe case insensitive, such as MeSH:D015161. But we need to keep all the prefix in upper case.
@@ -147,7 +150,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
                         converted_id_dict[choice] = None
 
                 if converted_id_dict:
-                    self._converted_ids.append(converted_id_dict)
+                    self.add_converted_id(converted_id_dict)
 
     @retry(stop=stop_after_attempt(5), wait=wait_random(min=1, max=15))
     def _fetch_ids(self, ids) -> dict:
@@ -202,6 +205,9 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
         for i in range(0, len(self._ids), self._batch_size):
             batch_ids = self._ids[i : i + self._batch_size]
             self._fetch_format_data(batch_ids)
+            self._converted_ids = MyDisease.update_metadata(
+                self._converted_ids, self.default_database
+            )
             time.sleep(self._sleep_time)
 
         return ConversionResult(
@@ -240,6 +246,18 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
             **kwargs,
         )
 
+    def _format_by_metadata(
+        self, new_row: Dict[str, Any], metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        new_row[self.file_format_cls.NAME] = metadata.get("name") or new_row.get("name")
+        new_row[self.file_format_cls.DESCRIPTION] = metadata.get(
+            "description"
+        ) or new_row.get("description")
+        new_row[self.file_format_cls.SYNONYMS] = metadata.get(
+            "synonyms"
+        ) or new_row.get("synonyms")
+        return new_row
+
     def format(self):
         """Format the disease ontology file.
 
@@ -254,10 +272,12 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
             id = converted_id.get(self.ontology_type.default)
             record = self.get_raw_record(raw_id)
             columns = self._expected_columns + self._optional_columns
-            new_row = {
-                key: self.format_record_value(record, key)
-                for key in columns
-            }
+            new_row = {key: self.format_record_value(record, key) for key in columns}
+
+            metadata = converted_id.get_metadata()
+
+            if metadata:
+                new_row = self._format_by_metadata(new_row, metadata)
 
             if id is None:
                 # Keep the original record if the id does not match the default prefix.
@@ -288,10 +308,7 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
             prefix, value = id.split(":")
             record = self.get_raw_record(id)
             columns = self._expected_columns + self._optional_columns
-            new_row = {
-                key: self.format_record_value(record, key)
-                for key in columns
-            }
+            new_row = {key: self.format_record_value(record, key) for key in columns}
             new_row[self.file_format_cls.ID] = id
             new_row[self.file_format_cls.LABEL] = self.ontology_type.type
             new_row[self.file_format_cls.RESOURCE] = prefix
@@ -325,7 +342,7 @@ if __name__ == "__main__":
         "HP:0030358",
         "ORDO:94063",
         "UMLS:C0007131",
-        "ICD-9:349.89"
+        "ICD-9:349.89",
     ]
     disease = DiseaseOntologyConverter(ids)
     result = disease.convert()

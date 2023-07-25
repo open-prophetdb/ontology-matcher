@@ -1,7 +1,11 @@
 import requests
-from typing import List, Any
+import logging
+from typing import List, Any, Dict
 from dataclasses import dataclass
 from tenacity import retry, stop_after_attempt, wait_random
+from ontology_matcher.ontology_formatter import ConvertedId, make_grouped_ids
+
+logger = logging.getLogger("apis")
 
 
 @dataclass
@@ -53,7 +57,7 @@ class OLS4Doc:
 
 
 class OLS4Query:
-    """Query the OLS4 API.
+    """Query the OLS4 API. We can use this API to update information for the disease entity. So we don't need the users to provide a full disease ontology file, they can just provide a set of ids.
 
     Args:
         - q: The query string, e.g. q=UBERON:0000948
@@ -88,28 +92,16 @@ class OLS4Query:
 
     def __init__(
         self,
-        q: List[str] | str,
+        q: str,
         ontology: str,
         exact=True,
         **kwargs,
     ):
         # Check if the q has a correct prefix which must be one of the supported ontologies.
-        if isinstance(q, str):
-            q = [q]
+        if not isinstance(q, str):
+            raise ValueError("The query string must be a string.")
 
-        failed = []
-        for q_item in q:
-            if not any(
-                q_item.startswith(ontology) for ontology in self.supported_ontologies
-            ):
-                failed.append(q_item)
-
-        if len(failed) > 0:
-            raise ValueError(
-                f"The query string must have a correct prefix which must be one of the supported ontologies: {self.supported_ontologies.keys()}. The following query strings are not correct: {failed}"
-            )
-
-        self.q = list(map(lambda x: x.replace(":", "_"), q))
+        self.q = q.replace(":", "_").split(",")
 
         if ontology not in self.supported_ontologies:
             raise ValueError(
@@ -138,6 +130,8 @@ class OLS4Query:
             "exact": self.exact,
             **self.params,
         }
+
+        logger.debug("Params: %s" % params)
         response = requests.get(self.api_endpoint, headers=headers, params=params)
         return response.json()
 
@@ -145,7 +139,7 @@ class OLS4Query:
         """Parse the response data.
 
         Example:
-        https://www.ebi.ac.uk/ols4/api/search?q=UBERON:0000948&queryFields=short_form&ontology=uberon&exact=true
+        https://www.ebi.ac.uk/ols4/api/search?q=UBERON_0000948&queryFields=short_form&ontology=uberon&exact=true
 
         {
             "response": {
@@ -197,6 +191,7 @@ class OLS4Query:
                 )
             )
 
+            print("Matched docs: %s" % matched_docs)
             if len(matched_docs) == 0:
                 results.append(
                     Entity(
@@ -209,19 +204,19 @@ class OLS4Query:
                         }
                     )
                 )
-
-            matched_doc = matched_docs[0]
-            results.append(
-                Entity(
-                    **{
-                        "synonyms": "|".join(matched_doc.get("synonym")),
-                        "description": "\n".join(matched_doc.get("description")),
-                        "id": raw_item,
-                        "name": matched_doc.get("label"),
-                        "resource": raw_item.split(":")[0],
-                    }
+            else:
+                matched_doc = matched_docs[0]
+                results.append(
+                    Entity(
+                        **{
+                            "synonyms": "|".join(matched_doc.get("synonym")),
+                            "description": "\n".join(matched_doc.get("description")),
+                            "id": raw_item,
+                            "name": matched_doc.get("label"),
+                            "resource": raw_item.split(":")[0],
+                        }
+                    )
                 )
-            )
 
         return results
 
@@ -310,3 +305,188 @@ class MyGene:
         ]
         """
         return self.data
+
+
+class MyChemical:
+    """A API wrapper for mychem.info. It can deal with common chemical ids. Such as pubchem, chebi, drugbank,  mesh, umls, pharmgkb, etc. So we can use it to convert the ids for metabolites, compounds etc. The http://cts.fiehnlab.ucdavis.edu/ is also a good choice, but it doesn't update frequently."""
+
+    pass
+
+
+class MyDisease:
+    """A API wrapper for mydisease.info. It can deal with common disease ids. Such as DOID, MESH, OMIM, ORDO, etc. So we can use it to convert the ids for diseases."""
+
+    FIELDS = {"update_metadata": ["mondo", "disease_ontology", "umls"]}
+
+    SUPPORTED_SCOPES = {
+        "MONDO": "_id",
+        "DOID": "disease_ontology.doid",
+    }
+
+    api_endpoint = "https://mydisease.info/v1/query"
+    # Example: https://mydisease.info/v1/query?fields=mondo&size=10&from=0&fetch_all=false
+
+    def __init__(
+        self,
+        q: List[str],
+        purpose: str = "update_metadata",
+        **kwargs,
+    ):
+        prefixes = [x.split(":")[0] for x in q]
+        if len(set(prefixes)) > 1:
+            raise ValueError("The query strings must have the same prefix.")
+        else:
+            prefix = prefixes[0]
+            if prefix not in self.SUPPORTED_SCOPES:
+                raise ValueError(
+                    f"Prefix {prefix} is not supported currently. Please choose from {self.SUPPORTED_SCOPES.keys()}"
+                )
+
+        self.q = q
+        self.scopes = self.SUPPORTED_SCOPES.get(prefix)
+        self.fields = self.FIELDS.get(purpose, [])
+        self.fetch_all = "false"
+        self.params = kwargs
+
+        self.data = self._request()
+
+    @retry(stop=stop_after_attempt(5), wait=wait_random(min=1, max=15))
+    def _request(self) -> dict:
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36",
+        }
+
+        payload = {
+            "q": self.q,
+            "fields": ",".join(self.fields),
+            "scopes": self.scopes,
+            "fetch_all": self.fetch_all,
+            **self.params,
+        }
+
+        logger.debug("Payload: %s" % payload)
+        response = requests.post(self.api_endpoint, headers=headers, json=payload)
+        return response.json()
+
+    def parse(self) -> List[Entity]:
+        """Parse the response data.
+
+        Example:
+        http://mydisease.info/v1/disease/MONDO:0016575
+        """
+        logger.debug("Data: %s" % self.data)
+        results: List[Entity] = []
+        for item in self.q:
+            # Find the matched doc by the q value
+            matched_docs: List[OLS4Doc] = list(
+                filter(
+                    lambda doc: doc.get("query") == item,
+                    self.data,
+                )
+            )
+
+            logger.debug("Matched docs: %s" % matched_docs)
+            if len(matched_docs) == 0:
+                results.append(
+                    Entity(
+                        **{
+                            "synonyms": "",
+                            "description": "",
+                            "id": item,
+                            "name": "",
+                            "resource": item.split(":")[0],
+                        }
+                    )
+                )
+            else:
+                matched_doc = matched_docs[0]
+                mondo = matched_doc.get("mondo")
+                do = matched_doc.get("disease_ontology")
+                name = ""
+                synonyms = []
+                description = ""
+
+                if mondo:
+                    name = mondo.get("label")
+                    synonyms = mondo.get("synonym", {}).get("exact", [])
+                    description = mondo.get("definition", "")
+                elif do:
+                    name = do.get("name")
+                    synonyms = do.get("synonyms", {}).get("exact", [])
+                    description = do.get("def", "")
+
+                results.append(
+                    Entity(
+                        **{
+                            "synonyms": "|".join(
+                                synonyms if isinstance(synonyms, list) else [synonyms]
+                            ),
+                            "description": description,
+                            "id": item,
+                            "name": name,
+                            "resource": item.split(":")[0],
+                        }
+                    )
+                )
+
+        return results
+
+    @classmethod
+    def update_metadata(
+        cls, converted_ids: List[ConvertedId], database: str
+    ) -> List[ConvertedId]:
+        def get_id(x: str | List[str]) -> str | None:
+            if isinstance(x, list) and len(x) == 1:
+                return x[0]
+            elif isinstance(x, str):
+                return x
+            else:
+                return None
+
+        selected_id_pair: Dict[str, str] = {
+            # Stupid warning: get_id(x.get(database)) must be not None, because if clause has already checked it.
+            # type: ignore
+            x.get_raw_id(): get_id(x.get(database))
+            for x in converted_ids
+            if get_id(x.get(database))
+        }
+        ids = list(selected_id_pair.values())
+        logger.debug("Ids: %s" % ids)
+        grouped_ids = make_grouped_ids(ids)
+        id_dict = grouped_ids.id_dict
+
+        # Groups may be similar to 'DOID', 'MONDO', etc.
+        groups = id_dict.keys()
+        valid_keys = set(groups).intersection(set(cls.SUPPORTED_SCOPES.keys()))
+
+        logger.debug("Valid keys: %s" % valid_keys)
+
+        for group in valid_keys:
+            ids = [f"{group}:{x}" for x in id_dict.get(group, [])]
+
+            query = cls(ids, ontology=group, exact=True)
+            results = query.parse()
+
+            for (index, result) in enumerate(results):
+                matched = converted_ids[index]
+
+                logger.debug(
+                    "Matched ConvertedId: %s, %s, %s"
+                    % (
+                        matched,
+                        list(map(lambda x: x.get(database), converted_ids)),
+                        result.id,
+                    ),
+                )
+
+                matched.update_metadata(result.__dict__)
+
+        return converted_ids
+
+
+class MyVariant:
+    """A API wrapper for myvariant.info. It can deal with common variant ids. Such as dbSNP, HGVS, ClinVar, etc. So we can use it to convert the ids for variants."""
+
+    pass
