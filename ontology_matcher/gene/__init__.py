@@ -11,6 +11,7 @@ from ontology_matcher.ontology_formatter import (
     OntologyBaseConverter,
     BaseOntologyFormatter,
     NoResultException,
+    ConvertedId,
 )
 from ontology_matcher.gene.custom_types import GeneOntologyFileFormat
 
@@ -128,7 +129,19 @@ class GeneOntologyConverter(OntologyBaseConverter):
                 self._failed_ids.append(failed_id)
                 continue
 
-            result = search_results[search_results[prefix] == value]
+            # print("Processing %s" % search_results)
+            # The returned MGI ids are like MGI:1342288, so we need to use the full id to match the results.
+            # Other ids are like 7157 for ENTREZ, so we need to use the value to match the results.
+            if prefix == "MGI":
+                result = search_results[search_results[prefix] == id]
+            else:
+                result = search_results[search_results[prefix] == value]
+
+            # If we cannot find information for the id, this means that the id is not valid. So we don't need to check the result for the default database.
+            if result.empty:
+                failed_id = FailedId(idx=index, id=id, reason="No results found")
+                self.add_failed_id(failed_id)
+                continue
 
             converted_id_dict = {}
             converted_id_dict[prefix] = id
@@ -175,6 +188,9 @@ class GeneOntologyConverter(OntologyBaseConverter):
                         converted_id_dict = {}
                         break
                 else:
+                    # Why we don't abandon the result of the default database if it is empty?
+                    # Because we would like to convert ids to the default database as much as possible.
+                    # But also need to keep ids from multiple resources for gaining more entities.
                     converted_id_dict[choice] = None
 
             if converted_id_dict:
@@ -217,11 +233,6 @@ class GeneOntologyConverter(OntologyBaseConverter):
             scope = get_scope(group)
             # All fields information: http://mygene.info/v3/gene/1017
             default_fields = list(default_field_dict.values()) + additional_fields
-
-            # For more details on the mygene API, please refer to https://docs.mygene.info/en/latest/doc/query_service.html
-            if scope == "MGI":
-                # The MGI id should be MGI:MGI:1342288, so we need to add the prefix.
-                ids = [f"MGI:{x}" for x in ids]
 
             request = MyGene(
                 q=",".join(ids), scopes=scope, fields=default_fields, dotfield=True
@@ -333,7 +344,9 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
 
             synonyms = list(set(synonyms))
 
-        def format_by_metadata(new_row: Dict[str, Any], metadata: Dict[str, Any]) -> Dict[str, Any]:
+        def format_by_metadata(
+            new_row: Dict[str, Any], metadata: Dict[str, Any]
+        ) -> Dict[str, Any]:
             new_row[self.file_format_cls.NAME] = metadata.get("name")
             new_row[self.file_format_cls.TAXID] = metadata.get("taxid")
             new_row[self.file_format_cls.DESCRIPTION] = metadata.get("summary")

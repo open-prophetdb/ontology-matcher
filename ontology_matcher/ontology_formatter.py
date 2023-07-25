@@ -44,7 +44,8 @@ class ConvertedId:
     raw_id: str
     metadata: Dict[str, str] | None
 
-    def __new__(cls, *args, **kwargs):
+    @classmethod
+    def from_args(cls, **kwargs):
         try:
             initializer = cls.__initializer
         except AttributeError:
@@ -60,7 +61,7 @@ class ConvertedId:
                 added_args[name] = kwargs.pop(name)
 
         ret = object.__new__(cls)
-        initializer(ret, **kwargs) # type: ignore
+        initializer(ret, **kwargs)  # type: ignore
         # ... and add the new ones by hand
         for new_name, new_val in added_args.items():
             setattr(ret, new_name, new_val)
@@ -68,18 +69,19 @@ class ConvertedId:
         return ret
 
     def get_idx(self) -> int:
-        return getattr(self, 'idx')
-    
+        return getattr(self, "idx")
+
     def get_raw_id(self) -> str:
-        return getattr(self, 'raw_id')
-    
+        return getattr(self, "raw_id")
+
     def get_metadata(self) -> Dict[str, str] | None:
-        return getattr(self, 'metadata')
-    
+        return getattr(self, "metadata")
+
     def get(self, key: str) -> Any:
-        func = getattr(self, "get_%s" % key)
-        if func is None:
-            raise Exception("The key %s is not supported." % key)
+        try:
+            func = getattr(self, "get_%s" % key)
+        except AttributeError:
+            return getattr(self, key)
 
         return func()
 
@@ -157,7 +159,8 @@ class OntologyBaseConverter:
                     {
                         "idx": idx,
                         "id": id,
-                        "reason": "The id must be in the format of <database>:<id>.",
+                        "reason": "The id must be in the format of <database>:<id>. Only support the following databases: %s. Besides, the id must match the pattern [a-z0-9A-Z.]+"
+                        % self._databases,
                     }
                 )
 
@@ -181,7 +184,7 @@ class OntologyBaseConverter:
         return self._failed_ids
 
     @property
-    def converted_ids(self):
+    def converted_ids(self) -> List[ConvertedId]:
         return self._converted_ids
 
     @property
@@ -215,9 +218,9 @@ class OntologyBaseConverter:
 
         print("\n")
 
-    def add_converted_id(self, converted_id: Union[ConvertedId, Dict[str, str]]):
+    def add_converted_id(self, converted_id: Dict[str, Any]):
         """Add a converted id into the list of converted ids."""
-        self._converted_ids.append(converted_id)
+        self._converted_ids.append(ConvertedId.from_args(**converted_id))
 
     def convert(self) -> ConversionResult:
         """Convert the ids.
@@ -309,7 +312,7 @@ class BaseOntologyFormatter:
 
         if ontology_converter is None:
             raise Exception("The ontology converter must be specified.")
-        
+
         # Using a class method to get the expected columns will be more robust.
         self._expected_columns = self.file_format_cls.expected_columns()
 
@@ -380,7 +383,7 @@ class BaseOntologyFormatter:
                 % ", ".join(missed_columns)
             )
         return True
-    
+
     def get_raw_record(self, id: str) -> pd.DataFrame:
         """Get the raw record by id.
 
@@ -415,7 +418,7 @@ class BaseOntologyFormatter:
             return record[key].values[0]
         except KeyError:
             return ""
-        
+
     def get_alias_ids(self, converted_id: ConvertedId) -> List[str]:
         ids = [
             converted_id.get(x)
@@ -427,9 +430,9 @@ class BaseOntologyFormatter:
             if type(id) == list:
                 unique_ids.extend(id)
             elif type(id) == str and id not in unique_ids:
-                unique_ids.append(id)      
+                unique_ids.append(id)
 
-        return unique_ids  
+        return unique_ids
 
     def format(self):
         """Format the disease ontology file.

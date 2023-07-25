@@ -251,6 +251,12 @@ class MyGene:
     ]
 
     def __init__(self, q: str, scopes: str, fields: List[str] = [], **kwargs):
+        # For more details on the mygene API, please refer to https://docs.mygene.info/en/latest/doc/query_service.html
+        if "MGI" in scopes.split(","):
+            # The MGI id should be MGI:MGI:1342288, so we need to add the prefix.
+            ids = [f"MGI:{x}" for x in q.split(",")]
+            q = ",".join(ids)
+
         self.q = q
         self.scopes = scopes
         self.fields = fields or self.fields

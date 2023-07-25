@@ -4,6 +4,7 @@ import requests
 import pandas as pd
 from pathlib import Path
 from typing import Union, List, Optional, Dict
+from tenacity import retry, stop_after_attempt, wait_random
 from ontology_matcher.ontology_formatter import (
     OntologyType,
     Strategy,
@@ -18,9 +19,10 @@ from ontology_matcher.symptom.custom_types import SymptomOntologyFileFormat
 # SYMP: Symptom Ontology ID, https://raw.githubusercontent.com/SymptomOntology/SymptomOntology/v2022-11-30/src/ontology/symp.owl; https://bioportal.bioontology.org/ontologies/SYMP
 # UMLS: Unified Medical Language System, https://www.nlm.nih.gov/research/umls/
 # MESH: Medical Subject Headings, https://www.nlm.nih.gov/mesh/
+# HP: Human Phenotype Ontology, https://hpo.jax.org/app/
 
 SYMPTOM_DICT = OntologyType(
-    type="Symptom", default="SYMP", choices=["SYMP", "MESH", "UMLS"]
+    type="Symptom", default="MESH", choices=["SYMP", "MESH", "UMLS", "HP"]
 )
 
 
@@ -56,7 +58,21 @@ class SymptomOntologyConverter(OntologyBaseConverter):
             "UMLS": "https://www.nlm.nih.gov/research/umls/",
             "MESH": "https://www.nlm.nih.gov/mesh/",
             "SYMP": "https://bioportal.bioontology.org/ontologies/SYMP",
+            "HP": "https://hpo.jax.org/app/",
         }
+    
+    @retry(stop=stop_after_attempt(5), wait=wait_random(min=1, max=15))
+    def _fetch_format_data(self, ids: List[str]) -> None:
+        """Fetch and format the ids.
+
+        Args:
+            ids (List[str]): A list of ids.
+
+        Returns:
+            None
+        """
+        response = self._fetch_ids(ids)
+        self._format_response(response, ids)
 
     def _format_response(self, response: dict, batch_ids: List[str]) -> None:
         """Format the response from the OXO API.
@@ -156,19 +172,22 @@ class SymptomOntologyConverter(OntologyBaseConverter):
             "Content-Type": "application/json",
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36",
         }
+        payload = {
+            "ids": ids,
+            "inputSource": None,
+            "mappingTarget": self.databases,
+            "mappingSource": self.databases,
+            "distance": 1,
+        }
+
         results = requests.post(
             self._database_url,
             headers=headers,
-            json={
-                "ids": ids,
-                "inputSource": None,
-                "mappingTarget": self.databases,
-                "mappingSource": self.databases,
-                "distance": 1,
-            },
+            json=payload,
             params={"size": self._batch_size},
         )
 
+        print("Requests: %s\n%s" % (results.json(), payload))
         return results.json()
 
     def convert(self) -> ConversionResult:
@@ -180,8 +199,7 @@ class SymptomOntologyConverter(OntologyBaseConverter):
         # Cannot use the parallel processing, otherwise the index order will not be correct.
         for i in range(0, len(self._ids), self._batch_size):
             batch_ids = self._ids[i : i + self._batch_size]
-            response = self._fetch_ids(batch_ids)
-            self._format_response(response, batch_ids)
+            self._fetch_format_data(batch_ids)
             time.sleep(self._sleep_time)
 
         return ConversionResult(
@@ -234,10 +252,7 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
             id = converted_id.get(SYMPTOM_DICT.default)
             record = self.get_raw_record(raw_id)
             columns = self._expected_columns + self._optional_columns
-            new_row = {
-                key: self.format_record_value(record, key)
-                for key in columns
-            }
+            new_row = {key: self.format_record_value(record, key) for key in columns}
 
             if id is None:
                 # Keep the original record if the id does not match the default prefix.
@@ -266,10 +281,7 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
             prefix, value = id.split(":")
             record = self.get_raw_record(id)
             columns = self._expected_columns + self._optional_columns
-            new_row = {
-                key: self.format_record_value(record, key)
-                for key in columns
-            }
+            new_row = {key: self.format_record_value(record, key) for key in columns}
             new_row[self.file_format_cls.ID] = id
             new_row[self.file_format_cls.LABEL] = self.ontology_type.type
             new_row[self.file_format_cls.RESOURCE] = prefix
@@ -299,7 +311,7 @@ if __name__ == "__main__":
         "SYMP:0000099",
         "SYMP:0000259",
         "SYMP:0000729",
-        "MESH:D000006",
+        "MESH:D010146",
         "MESH:D000270",
         "MESH:D000326",
         "MESH:D000334",

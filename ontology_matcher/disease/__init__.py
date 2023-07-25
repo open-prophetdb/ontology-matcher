@@ -320,17 +320,12 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
 if __name__ == "__main__":
     ids = [
         "DOID:7402",
-        "DOID:7400",
-        "DOID:7401",
-        "DOID:8731",
-        "DOID:8729",
-        "DOID:8725",
         "MESH:D015673",
         "ICD10CM:C34.9",
-        "SNOMED:254637007",
         "HP:0030358",
         "ORDO:94063",
         "UMLS:C0007131",
+        "ICD-9:349.89"
     ]
     disease = DiseaseOntologyConverter(ids)
     result = disease.convert()
