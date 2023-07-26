@@ -47,7 +47,7 @@ class CompoundOntologyConverter(OntologyBaseConverter):
 
         # More details on the database_url can be found here: https://docs.mychem.info/en/latest/
         self._database_url = "https://mychem.info"
-        print("The formatter will use the MyChem API to convert the compound ids.")
+        logger.info("The formatter will use the MyChem API to convert the compound ids.")
 
     @property
     def ontology_links(self) -> Dict[str, str]:
@@ -160,6 +160,7 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
         failed_formatted_data = []
 
         for converted_id in self._dict.converted_ids:
+            logger.debug("All keys: %s" % converted_id.__dict__)
             raw_id = converted_id.get("raw_id")
             id = converted_id.get(self.ontology_type.default)
             record = self.get_raw_record(raw_id)
@@ -176,7 +177,7 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
                 unique_ids = self.get_alias_ids(converted_id)
                 new_row[self.file_format_cls.XREFS] = "|".join(unique_ids)
                 formated_data.append(new_row)
-                print("No results found for %s, %s" % (raw_id, new_row))
+                logger.debug("No results found for %s, %s" % (raw_id, new_row))
             elif type(id) == list and len(id) > 1:
                 new_row[self.file_format_cls.XREFS] = "|".join(id)
                 new_row["reason"] = "Multiple results found"

@@ -1,6 +1,7 @@
 import re
 import pickle
 import pandas as pd
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Dict, Union, Optional, Type, Any
 from enum import Enum
@@ -44,6 +45,12 @@ class ConvertedId:
     raw_id: str
     metadata: Dict[str, str] | None
 
+    def _getattr(self, key: str) -> Any:
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            return None
+
     @classmethod
     def from_args(cls, **kwargs):
         try:
@@ -76,21 +83,20 @@ class ConvertedId:
             self.metadata[key] = metadata[key]
 
     def get_idx(self) -> int:
-        return getattr(self, "idx")
+        return self._getattr("idx")
 
     def get_raw_id(self) -> str:
-        return getattr(self, "raw_id")
+        return self._getattr("raw_id")
 
     def get_metadata(self) -> Dict[str, str] | None:
-        return getattr(self, "metadata")
+        return self._getattr("metadata")
 
     def get(self, key: str) -> Any:
-        try:
-            func = getattr(self, "get_%s" % key)
-        except AttributeError:
-            return getattr(self, key)
-
-        return func()
+        func = self._getattr("get_%s" % key)
+        if func:
+            return func()
+        else:
+            return self._getattr(key)
 
 
 @dataclass
@@ -327,14 +333,14 @@ class BaseOntologyFileFormat:
         raise NotImplementedError
 
 
-class BaseOntologyFormatter:
+class BaseOntologyFormatter(ABC):
     """Format the base ontology file."""
 
     def __init__(
         self,
         filepath: Union[str, Path],
-        file_format_cls: Type[BaseOntologyFileFormat],
-        ontology_type: OntologyType,
+        file_format_cls: Optional[Type[BaseOntologyFileFormat]] = None,
+        ontology_type: Optional[OntologyType] = None,
         ontology_converter: Optional[Type[OntologyBaseConverter]] = None,
         dict: Optional[ConversionResult] = None,
         **kwargs,
@@ -350,13 +356,18 @@ class BaseOntologyFormatter:
         self._data = self._read_file()
         self._formatted_data = None
         self._failed_formatted_data = None
-        self.file_format_cls = file_format_cls
-        self.ontology_type = ontology_type
 
-        if self.file_format_cls is None:
+        if not ontology_type:
+            raise Exception("The ontology type must be specified.")
+        else:
+            self.ontology_type: OntologyType = ontology_type # type: ignore
+
+        if not file_format_cls:
             raise Exception("The format_cls must be specified.")
+        else:
+            self.file_format_cls: Type[BaseOntologyFileFormat] = file_format_cls # type: ignore
 
-        if ontology_converter is None:
+        if not ontology_converter:
             raise Exception("The ontology converter must be specified.")
 
         # Using a class method to get the expected columns will be more robust.
@@ -478,7 +489,7 @@ class BaseOntologyFormatter:
             elif type(id) == str and id not in unique_ids:
                 unique_ids.append(id)
 
-        return unique_ids
+        return list(set(unique_ids))
 
     def format(self):
         """Format the disease ontology file.

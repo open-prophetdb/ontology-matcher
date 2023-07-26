@@ -1,5 +1,6 @@
 import re
 import time
+import logging
 import requests
 import pandas as pd
 from tenacity import retry, stop_after_attempt, wait_random
@@ -16,6 +17,8 @@ from ontology_matcher.ontology_formatter import (
     NoResultException,
 )
 from ontology_matcher.disease.custom_types import DiseaseOntologyFileFormat
+
+logger = logging.getLogger(__name__)
 
 DISEASE_DICT = OntologyType(
     type="Disease",
@@ -48,7 +51,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
 
         # More details on the database_url can be found here: https://www.ebi.ac.uk/spot/oxo/index
         self._database_url = "https://www.ebi.ac.uk/spot/oxo/api/search"
-        print("The formatter will use the OXO API to convert the disease ids.")
+        logger.info("The formatter will use the OXO API to convert the disease ids.")
 
     @property
     def ontology_links(self) -> Dict[str, str]:
@@ -83,7 +86,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
         if len(search_results) == 0:
             raise NoResultException()
 
-        print(
+        logger.info(
             "Batch size: %s, results size: %s" % (len(batch_ids), len(search_results))
         )
         for index, id in enumerate(batch_ids):
@@ -284,7 +287,7 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
                 unique_ids = self.get_alias_ids(converted_id)
                 new_row[self.file_format_cls.XREFS] = "|".join(unique_ids)
                 formated_data.append(new_row)
-                print("No results found for %s, %s" % (raw_id, new_row))
+                logger.debug("No results found for %s, %s" % (raw_id, new_row))
             elif type(id) == list and len(id) > 1:
                 new_row[self.file_format_cls.XREFS] = "|".join(id)
                 new_row["reason"] = "Multiple results found"

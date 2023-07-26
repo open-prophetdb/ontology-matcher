@@ -1,4 +1,5 @@
 import time
+import logging
 from ontology_matcher.apis import MyGene
 import pandas as pd
 from pathlib import Path
@@ -15,6 +16,8 @@ from ontology_matcher.ontology_formatter import (
     flatten_dedup
 )
 from ontology_matcher.gene.custom_types import GeneOntologyFileFormat
+
+logger = logging.getLogger(__name__)
 
 default_field_dict = {
     "ENTREZ": "entrezgene",
@@ -65,7 +68,7 @@ class GeneOntologyConverter(OntologyBaseConverter):
         )
 
         self._database_url = "https://mygene.info"
-        print(
+        logger.info(
             "The formatter will use the mygene API (%s) to convert gene ids."
             % self._database_url
         )
@@ -98,7 +101,7 @@ class GeneOntologyConverter(OntologyBaseConverter):
         if search_results.empty:
             raise NoResultException()
 
-        print(
+        logger.info(
             "Batch size: %s, results size: %s"
             % (len(batch_ids), search_results.shape[0])
         )
@@ -121,7 +124,7 @@ class GeneOntologyConverter(OntologyBaseConverter):
                 self._failed_ids.append(failed_id)
                 continue
 
-            # print("Processing %s" % search_results)
+            logger.debug("Processing %s" % search_results)
             # The returned MGI ids are like MGI:1342288, so we need to use the full id to match the results.
             # Other ids are like 7157 for ENTREZ, so we need to use the value to match the results.
             if prefix == "MGI":

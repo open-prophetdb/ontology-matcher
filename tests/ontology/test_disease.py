@@ -28,8 +28,8 @@ class TestDiseaseOntologyConverter(unittest.TestCase):
     def test_convert(self):
         self.disease_ontology_converter.convert()
 
-        print(self.disease_ontology_converter.converted_ids)
-        print(self.disease_ontology_converter.failed_ids)
+        logger.debug(self.disease_ontology_converter.converted_ids)
+        logger.debug(self.disease_ontology_converter.failed_ids)
 
         self.assertEqual(
             len(self.disease_ontology_converter.failed_ids),

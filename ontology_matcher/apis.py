@@ -195,7 +195,7 @@ class OLS4Query:
                 )
             )
 
-            print("Matched docs: %s" % matched_docs)
+            logger.debug("Matched docs: %s" % matched_docs)
             if len(matched_docs) == 0:
                 results.append(
                     Entity(

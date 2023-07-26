@@ -1,9 +1,12 @@
 # Unittest for gene.py
 
+import logging
 import unittest
 from unittest.mock import patch, MagicMock
 from ontology_matcher.gene import GeneOntologyConverter
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Test GeneOntologyConverter
 class TestGeneOntologyConverter(unittest.TestCase):
@@ -24,8 +27,8 @@ class TestGeneOntologyConverter(unittest.TestCase):
     def test_convert(self):
         self.gene_ontology_converter.convert()
 
-        print(self.gene_ontology_converter.converted_ids)
-        print(self.gene_ontology_converter.failed_ids)
+        logger.debug(self.gene_ontology_converter.converted_ids)
+        logger.debug(self.gene_ontology_converter.failed_ids)
 
         self.assertEqual(
             len(self.gene_ontology_converter.failed_ids),

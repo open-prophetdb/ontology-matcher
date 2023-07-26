@@ -1,5 +1,6 @@
 import re
 import time
+import logging
 import requests
 import pandas as pd
 from pathlib import Path
@@ -20,6 +21,8 @@ from ontology_matcher.symptom.custom_types import SymptomOntologyFileFormat
 # UMLS: Unified Medical Language System, https://www.nlm.nih.gov/research/umls/
 # MESH: Medical Subject Headings, https://www.nlm.nih.gov/mesh/
 # HP: Human Phenotype Ontology, https://hpo.jax.org/app/
+
+logger = logging.getLogger(__name__)
 
 SYMPTOM_DICT = OntologyType(
     type="Symptom", default="MESH", choices=["SYMP", "MESH", "UMLS", "HP"]
@@ -50,7 +53,7 @@ class SymptomOntologyConverter(OntologyBaseConverter):
 
         # More details on the database_url can be found here: https://www.ebi.ac.uk/spot/oxo/index
         self._database_url = "https://www.ebi.ac.uk/spot/oxo/api/search"
-        print("The formatter will use the OXO API to convert the symptom ids.")
+        logger.info("The formatter will use the OXO API to convert the symptom ids.")
 
     @property
     def ontology_links(self) -> Dict[str, str]:
@@ -91,7 +94,7 @@ class SymptomOntologyConverter(OntologyBaseConverter):
         if len(search_results) == 0:
             raise NoResultException()
 
-        print(
+        logger.info(
             "Batch size: %s, results size: %s" % (len(batch_ids), len(search_results))
         )
         for index, id in enumerate(batch_ids):
@@ -156,7 +159,7 @@ class SymptomOntologyConverter(OntologyBaseConverter):
                         converted_id_dict[choice] = None
 
                 if converted_id_dict:
-                    self._converted_ids.append(converted_id_dict)
+                    self.add_converted_id(converted_id_dict)
 
     def _fetch_ids(self, ids) -> dict:
         """Fetch the ids from the OXO API.
@@ -187,7 +190,7 @@ class SymptomOntologyConverter(OntologyBaseConverter):
             params={"size": self._batch_size},
         )
 
-        print("Requests: %s\n%s" % (results.json(), payload))
+        logger.debug("Requests: %s\n%s" % (results.json(), payload))
         return results.json()
 
     def convert(self) -> ConversionResult:

@@ -49,22 +49,10 @@ def ontology(input_file, output_file, ontology_type, batch_size, sleep_time):
     if ontology_formatter_cls is None:
         raise ValueError("Ontology type not supported currently.")
 
-    file_format_cls = ONTOLOGY_FILE_FORMAT_DICT.get(ontology_type)
-
-    if file_format_cls is None:
-        raise ValueError("Ontology type not supported currently.")
-
-    ontology_type_cls = ONTOLOGY_TYPE_DICT.get(ontology_type)
-
-    if ontology_type_cls is None:
-        raise ValueError("Ontology type not supported currently.")
-
     ontology_formatter = ontology_formatter_cls(
         filepath=input_file,
         batch_size=batch_size,
         sleep_time=sleep_time,
-        file_format_cls=file_format_cls,
-        ontology_type=ontology_type_cls,
     )
     ontology_formatter.format()
     ontology_formatter.write(output_file)

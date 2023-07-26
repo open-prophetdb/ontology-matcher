@@ -1,0 +1,12 @@
+id	name	label	resource	description	synonyms	pmids	taxid	xrefs
+MESH:C000599298	10,10'-dimethyl-9,9'-biacridinium bis(monomethyl terephthalate)	Compound	CTD					UMLS:C4043551|MESH:C000599298
+MESH:C000604906	10-(10H-phenothiazin-3'-yl)propenal	Compound	CTD					UMLS:C4078039|MESH:C000604906
+MESH:C014305	0-acetylpantolactone	Compound	CTD					UMLS:C0606132|MESH:C014305
+MESH:C044756	(R)-isomer of 10,11-dimethoxy-N-n-propylnoraporphine	Compound	CTD					UMLS:C0623804|UMLS:C0902164|UMLS:C0902165|UMLS:C0623803|MESH:C044756
+MESH:C046445	10,11,12-trihydroxy-5,8,14,17-eicosatetraenoic acid	Compound	CTD					MESH:C046445|UMLS:C0208219
+MESH:C060004	1012S	Compound	CTD					UMLS:C0044701|MESH:C060004
+MESH:C096076	10,12-peroxycalamenene	Compound	CTD					UMLS:C0382457|MESH:C096076
+MESH:C434150	0231A , Streptomyces	Compound	CTD					MESH:C434150|UMLS:C3489564
+MESH:C469614	10,11-epoxy-hexadecadienoic acid	Compound	CTD					UMLS:C1172841|MESH:C469614
+MESH:C493048	['10, 12-pentacosadiynoic acid', '10,12-pentacosadiynoic acid']	Compound	CTD					MESH:C493048|UMLS:C1528731
+MESH:C569520	10,11-dihydrodibenzo(b,f)oxepine-4-carboxamide	Compound	CTD					MESH:C569520|UMLS:C3253135
