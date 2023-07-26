@@ -8,6 +8,9 @@ from ontology_matcher.gene.custom_types import GeneOntologyFileFormat
 from ontology_matcher.symptom import SymptomOntologyFormatter, SYMPTOM_DICT
 from ontology_matcher.symptom.custom_types import SymptomOntologyFileFormat
 
+from ontology_matcher.compounds import COMPOUND_DICT, CompoundOntologyFormatter
+from ontology_matcher.compounds.custom_types import CompoundOntologyFileFormat
+
 from ontology_matcher.ontology_formatter import (
     BaseOntologyFormatter,
     BaseOntologyFileFormat,
@@ -17,7 +20,7 @@ from ontology_matcher.ontology_formatter import (
 ONTOLOGY_DICT: dict[str, Type[BaseOntologyFormatter]] = {
     "disease": DiseaseOntologyFormatter,
     "gene": GeneOntologyFormatter,
-    # "compound": None,
+    "compound": CompoundOntologyFormatter,
     # "anatomy": None,
     # "pathway": None,
     # "cellular_component": None,
@@ -35,7 +38,7 @@ ONTOLOGY_DICT_KEYS = list(ONTOLOGY_DICT.keys())
 ONTOLOGY_TYPE_DICT: dict[str, OntologyType] = {
     "disease": DISEASE_DICT,
     "gene": GENE_DICT,
-    # "compound": None,
+    "compound": COMPOUND_DICT,
     # "anatomy": None,
     # "pathway": None,
     # "cellular_component": None,
@@ -51,7 +54,7 @@ ONTOLOGY_TYPE_DICT: dict[str, OntologyType] = {
 ONTOLOGY_FILE_FORMAT_DICT: dict[str, Type[BaseOntologyFileFormat]] = {
     "disease": DiseaseOntologyFileFormat,
     "gene": GeneOntologyFileFormat,
-    # "compound": None,
+    "compound": CompoundOntologyFileFormat,
     # "anatomy": None,
     # "pathway": None,
     # "cellular_component": None,
@@ -69,6 +72,7 @@ __all__ = [
     "BaseOntologyFormatter",
     "DiseaseOntologyFormatter",
     "GeneOntologyFormatter",
+    "CompoundOntologyFormatter",
     "ONTOLOGY_DICT_KEYS",
     "ONTOLOGY_TYPE_DICT",
 ]

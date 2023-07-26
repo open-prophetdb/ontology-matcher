@@ -2,8 +2,12 @@ import requests
 import logging
 from typing import List, Any, Dict
 from dataclasses import dataclass
+from enum import Enum
 from tenacity import retry, stop_after_attempt, wait_random
-from ontology_matcher.ontology_formatter import ConvertedId, make_grouped_ids
+from ontology_matcher.ontology_formatter import (
+    ConvertedId,
+    make_grouped_ids,
+)
 
 logger = logging.getLogger("apis")
 
@@ -307,10 +311,310 @@ class MyGene:
         return self.data
 
 
+class EntityType(Enum):
+    """The entity type."""
+
+    COMPOUND = "compound"
+    METABOLITE = "metabolite"
+
+
 class MyChemical:
     """A API wrapper for mychem.info. It can deal with common chemical ids. Such as pubchem, chebi, drugbank,  mesh, umls, pharmgkb, etc. So we can use it to convert the ids for metabolites, compounds etc. The http://cts.fiehnlab.ucdavis.edu/ is also a good choice, but it doesn't update frequently."""
 
-    pass
+    SUPPORTED_SCOPES = {
+        "PUBCHEM": "pubchem.cid",
+        "CHEBI": "chebi.id",
+        "MESH": "umls.mesh,pharmgkb.xrefs.mesh,ginas.xrefs.MESH,chembl.drug_indications.mesh_id",
+        "DrugBank": "drugbank.id",
+        "UMLS": "umls.cui",
+        "HMDB": "hmdb.accession",
+        "CHEMBL": "chembl.molecule_chembl_id",
+    }
+
+    api_endpoint = "http://mychem.info/v1/query"
+    # Example: https://docs.mychem.info/en/latest/doc/chem_query_service.html#id6
+
+    def __init__(
+        self,
+        q: List[str],
+        entity_type: EntityType = EntityType.COMPOUND,
+        **kwargs,
+    ):
+        prefixes = [x.split(":")[0] for x in q]
+        if len(set(prefixes)) > 1:
+            raise ValueError("The query strings must have the same prefix.")
+        else:
+            prefix = prefixes[0]
+            if prefix not in self.SUPPORTED_SCOPES:
+                raise ValueError(
+                    f"Prefix {prefix} is not supported currently. Please choose from {self.SUPPORTED_SCOPES.keys()}"
+                )
+
+        self.q = q
+        self.database = prefix
+        self.entity_type = entity_type
+        self.scopes = self.SUPPORTED_SCOPES.get(prefix)
+        self.params = kwargs
+
+        self.data = self._request()
+
+    @retry(stop=stop_after_attempt(5), wait=wait_random(min=1, max=15))
+    def _request(self) -> dict:
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36",
+        }
+
+        payload = {
+            "q": [x.split(":")[1] for x in self.q]
+            if self.database != "CHEBI"
+            else self.q,
+            "fields": "all",
+            "scopes": self.scopes,
+            **self.params,
+        }
+
+        logger.debug("Payload: %s" % payload)
+        response = requests.post(self.api_endpoint, headers=headers, json=payload)
+        return response.json()
+
+    def _convert2list(self, x: List[str] | str, database: str) -> List[str]:
+        def _add_prefix(x: str, database: str) -> str:
+            # The CHEBI id has a prefix CHEBI, but the other ids don't have a prefix.
+            if database == "CHEBI":
+                return x
+            else:
+                return f"{database}:{x}"
+
+        if isinstance(x, list):
+            return list(map(lambda y: _add_prefix(y, database), x))
+        elif isinstance(x, str):
+            return [_add_prefix(x, database)]
+        else:
+            return []
+
+    def _get_chebi(self, chebi_data: dict) -> dict:
+        """Get the chebi id from the data."""
+        if chebi_data:
+            xrefs = chebi_data.get("xrefs", {})
+            CHEMBL = self._convert2list(xrefs.get("chembl", []), "CHEMBL")
+            DRUGBANK = self._convert2list(xrefs.get("drugbank", []), "DrugBank")
+            HMDB = self._convert2list(xrefs.get("hmdb", []), "HMDB")
+            PUBCHEM = self._convert2list(
+                xrefs.get("pubchem", {}).get("cid", []), "PUBCHEM"
+            )
+            CHEBI = self._convert2list(chebi_data.get("id", ""), "CHEBI")
+
+            return {
+                "metadata": {
+                    "name": chebi_data.get("name"),
+                    "description": chebi_data.get("definition"),
+                    "synonyms": chebi_data.get("synonyms"),
+                    "pmids": chebi_data.get("citation", {}).get("pubmed", []),
+                },
+                "CHEBI": CHEBI,
+                "CHEMBL": CHEMBL,
+                "DrugBank": DRUGBANK,
+                "HMDB": HMDB,
+                "PUBCHEM": PUBCHEM,
+            }
+        else:
+            return {}
+
+    def _get_pubchem(self, pubchem_data: dict) -> dict:
+        """Get the pubchem id from the data."""
+        if pubchem_data:
+            return {
+                "metadata": {},
+                "PUBCHEM": self._convert2list(pubchem_data.get("cid", {}), "PUBCHEM"),
+            }
+        else:
+            return {}
+
+    def _get_drugbank(self, drugbank_data: dict) -> dict:
+        """Get the drugbank id from the data."""
+        if drugbank_data:
+            return {
+                "metadata": {
+                    "name": drugbank_data.get("name"),
+                    "synonyms": drugbank_data.get("synonyms"),
+                },
+                "DrugBank": self._convert2list(drugbank_data.get("id", {}), "DrugBank"),
+            }
+        else:
+            return {}
+
+    def _get_umls(self, umls_data: dict) -> dict:
+        """Get the umls id from the data."""
+        if umls_data:
+            return {
+                "metadata": {
+                    "name": umls_data.get("name"),
+                },
+                "UMLS": self._convert2list(umls_data.get("cui", {}), "UMLS"),
+                "MESH": self._convert2list(umls_data.get("mesh", {}), "MESH"),
+            }
+        else:
+            return {}
+
+    def _get_hmdb(self, pharmgkb_data: dict) -> dict:
+        """Get the hmdb id from the data. NOTICE: we cannot get hmdb data from the mychem.info directly. But we may can get the hmdb id from the pharmgkb data"""
+        if pharmgkb_data:
+            return {
+                "metadata": {
+                    "name": pharmgkb_data.get("name"),
+                    "synonyms": pharmgkb_data.get("trade_names", [])
+                    + pharmgkb_data.get("generic_names", []),
+                },
+                "HMDB": self._convert2list(
+                    pharmgkb_data.get("xrefs", {}).get("hmdb", []), "HMDB"
+                ),
+            }
+        else:
+            return {}
+
+    def _get_chembl(self, chembl_data: dict) -> dict:
+        """Get the chembl id from the data."""
+        if chembl_data:
+            return {
+                "metadata": {
+                    "name": chembl_data.get("pref_name"),
+                    "synonyms": list(
+                        map(
+                            lambda x: x.get("molecule_synonym"),
+                            chembl_data.get("molecule_synonyms", {}),
+                        )
+                    ),
+                },
+                "CHEMBL": self._convert2list(
+                    chembl_data.get("molecule_chembl_id", []), "CHEMBL"
+                ),
+            }
+        else:
+            return {}
+
+    def _get_mesh(self, ginas_data: dict) -> dict:
+        """Get the mesh id from the data."""
+        if ginas_data:
+            return {
+                "metadata": {
+                    "name": ginas_data.get("preferred_name"),
+                },
+                "MESH": self._convert2list(
+                    ginas_data.get("xrefs", {}).get("MESH", []), "MESH"
+                ),
+            }
+        else:
+            return {}
+
+    def _update_dict(self, x: dict, y: dict) -> dict:
+        """Update the dict x with the dict y. It follows the rules:
+        1. If the key exists either in x or y, we will use the existing value.
+        2. If the key exists both in x and y, we will merge the values. If the value is a list, we will merge the lists. If the value is a str or int, we will the y value (because we have make all the values to be a list if it can have multiple values). If the value is a dict, we will merge the dicts and follow the rule 1 and 2.
+        """
+        for key, value in y.items():
+            if key in x:
+                if isinstance(value, list):
+                    x[key] = list(set(x[key] + value))
+                elif isinstance(value, dict):
+                    x[key] = self._update_dict(x[key], value)
+                else:
+                    x[key] = value
+            else:
+                x[key] = value
+
+        return x
+
+    def parse(self) -> List[Dict[str, Any]]:
+        """Parse the response data."""
+
+        def get_xrefs(result: dict) -> List[str]:
+            """Get the xrefs from the result."""
+            xrefs = []
+            for key, value in result.items():
+                if key in [
+                    "CHEBI",
+                    "CHEMBL",
+                    "DrugBank",
+                    "HMDB",
+                    "PUBCHEM",
+                    "UMLS",
+                    "MESH",
+                ]:
+                    xrefs.extend(value)
+
+            return list(set(xrefs))
+
+        # logger.debug("Data: %s" % self.data)
+        results: List[Dict[str, Any]] = []
+        for index, item in enumerate(self.q):
+            # Find the matched doc by the q value
+            matched_docs = list(
+                filter(
+                    lambda doc: doc.get("query") == item.split(":")[1]
+                    if self.database != "CHEBI"
+                    else doc.get("query") == item,
+                    self.data,
+                )
+            )
+
+            # logger.debug("Matched docs: %s" % matched_docs)
+            if len(matched_docs) == 0:
+                results.append(
+                    {
+                        "idx": index,
+                        "raw_id": item,
+                        "resource": item.split(":")[0],
+                        "label": self.entity_type,
+                        self.database: item,
+                        "metadata": {
+                            "synonyms": "",
+                            "description": "",
+                            "name": "",
+                            "resource": item.split(":")[0],
+                            "xrefs": [],
+                        },
+                    }
+                )
+            else:
+                result: Dict[str, Any] = {
+                    "metadata": {},
+                }
+
+                for doc in matched_docs:
+                    result = self._update_dict(
+                        result, self._get_chebi(doc.get("chebi"))
+                    )
+                    result = self._update_dict(
+                        result, self._get_pubchem(doc.get("pubchem"))
+                    )
+                    result = self._update_dict(
+                        result, self._get_drugbank(doc.get("drugbank"))
+                    )
+                    result = self._update_dict(result, self._get_umls(doc.get("umls")))
+                    result = self._update_dict(
+                        result, self._get_hmdb(doc.get("pharmgkb"))
+                    )
+                    result = self._update_dict(
+                        result, self._get_chembl(doc.get("chembl"))
+                    )
+                    result = self._update_dict(result, self._get_mesh(doc.get("ginas")))
+
+                result.update(
+                    {
+                        "idx": index,
+                        "raw_id": item,
+                        "resource": item.split(":")[0],
+                        "label": self.entity_type,
+                    }
+                )
+                result.get("metadata", {}).update({"xrefs": get_xrefs(result)})
+                results.append(result)
+
+                logger.debug("Result: %s" % result)
+
+        return results
 
 
 class MyDisease:
@@ -380,7 +684,7 @@ class MyDisease:
         results: List[Entity] = []
         for item in self.q:
             # Find the matched doc by the q value
-            matched_docs: List[OLS4Doc] = list(
+            matched_docs = list(
                 filter(
                     lambda doc: doc.get("query") == item,
                     self.data,
@@ -469,7 +773,7 @@ class MyDisease:
             query = cls(ids, ontology=group, exact=True)
             results = query.parse()
 
-            for (index, result) in enumerate(results):
+            for index, result in enumerate(results):
                 matched = converted_ids[index]
 
                 logger.debug(

@@ -67,7 +67,7 @@ class ConvertedId:
             setattr(ret, new_name, new_val)
 
         return ret
-    
+
     def update_metadata(self, metadata: Dict[str, str]):
         for key in metadata.keys():
             if not self.metadata:
@@ -91,19 +91,25 @@ class ConvertedId:
             return getattr(self, key)
 
         return func()
-    
+
+
 @dataclass
 class GroupedIds:
     id_dict: Dict[str, List[str]]
     id_idx_dict: Dict[str, int]
 
 
-def make_grouped_ids(ids: List[str]):
-    id_lst = [
-        [id.split(":")[0], id.split(":")[1], idx] for (idx, id) in enumerate(ids)
-    ]
+def make_grouped_ids(ids: List[str]) -> GroupedIds:
+    """Make grouped ids.
 
-    # Group the ids by the prefix. such as {'ENTREZ': ['7157', '7158'], 'ENSEMBL': ['ENSG00000141510'], 'HGNC': ['11892']}
+    Args:
+        ids (List[str]): A set of ids, each id should be in the format of <database>:<id>.
+
+    Returns:
+        `GroupedIds`: The grouped ids which have two dictionaries: id_dict and id_idx_dict. The id_dict is used to group the ids by the prefix. The id_idx_dict is used to store the index of the id in the original list. id_dict: Group the ids by the prefix. such as `{'ENTREZ': ['7157', '7158'], 'ENSEMBL': ['ENSG00000141510'], 'HGNC': ['11892']}`; id_idx_dict: Store the index of the id in the original list. such as `{'ENTREZ:7157': 0, 'ENTREZ:7158': 1, 'ENSEMBL:ENSG00000141510': 2, 'HGNC:11892': 3}`
+    """
+    id_lst = [[id.split(":")[0], id.split(":")[1], idx] for (idx, id) in enumerate(ids)]
+
     id_dict: Dict[str, List[str]] = {}
     id_idx_dict: Dict[str, int] = {}
     for id in id_lst:
@@ -124,6 +130,7 @@ def flatten_dedup(nested_list: List[List[str] | str]) -> List[str]:
         else:
             flat_list.append(sublist)
     return list(set(flat_list))
+
 
 @dataclass
 class ConversionResult:
