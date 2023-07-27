@@ -596,7 +596,7 @@ class MyChemical:
             molecule_synonyms = chembl_data.get("molecule_synonyms", [])
             if isinstance(molecule_synonyms, dict):
                 synonyms = flatten_dedup(
-                    list(molecule_synonyms.get("molecule_synonym", []))
+                    [molecule_synonyms.get("molecule_synonym", [])]
                 )
             elif isinstance(molecule_synonyms, list):
                 synonyms = list(

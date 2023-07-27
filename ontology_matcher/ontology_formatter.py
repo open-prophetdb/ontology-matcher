@@ -173,7 +173,8 @@ class OntologyBaseConverter:
             Exception: If the batch size is larger than 500.
             Exception: If the ids are not in the correct format.
         """
-        self._ids = ids
+        # Remove nan values
+        self._ids = list(filter(lambda x: x and isinstance(x, str), ids))
         self._strategy = strategy
         self._default_database = ontology_type.default
         self._failed_ids: List[FailedId] = []
