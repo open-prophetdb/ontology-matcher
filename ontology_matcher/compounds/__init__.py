@@ -118,21 +118,21 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
     def __init__(
         self,
         filepath: Union[str, Path],
-        dict: Optional[ConversionResult] = None,
+        conversion_result: Optional[ConversionResult] = None,
         **kwargs,
     ) -> None:
         """Initialize the CompoundOntologyFormatter class.
 
         Args:
             filepath (Union[str, Path]): The path of the disease ontology file. Only support csv and tsv file.
-            dict (ConversionResult, optional): The results of id conversion. Defaults to None.
+            conversion_result (ConversionResult, optional): The results of id conversion. Defaults to None.
             **kwargs: The keyword arguments for the Compound class.
         """
         super().__init__(
             filepath,
             file_format_cls=CompoundOntologyFileFormat,
             ontology_converter=CompoundOntologyConverter,
-            dict=dict,
+            conversion_result=conversion_result,
             ontology_type=COMPOUND_DICT,
             **kwargs,
         )
@@ -148,6 +148,7 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
         synonyms = metadata.get("synonyms") or new_row.get("synonyms")
 
         if synonyms and type(synonyms) == list:
+            synonyms = map(lambda x: str(x), synonyms)
             new_row[self.file_format_cls.SYNONYMS] = "|".join(synonyms)
         else:
             new_row[self.file_format_cls.SYNONYMS] = synonyms
@@ -173,7 +174,7 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
         formated_data = []
         failed_formatted_data = []
 
-        for converted_id in self._dict.converted_ids:
+        for converted_id in self.conversion_result.converted_ids:
             logger.debug("All keys: %s" % converted_id.__dict__)
             raw_id = converted_id.get("raw_id")
             id = converted_id.get(self.ontology_type.default)
@@ -186,7 +187,7 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
             if metadata:
                 new_row = self._format_by_metadata(new_row, metadata)
 
-            if id is None:
+            if id is None or len(id) == 0:
                 # Keep the original record if the id does not match the default prefix.
                 unique_ids = self.get_alias_ids(converted_id)
                 new_row[self.file_format_cls.XREFS] = "|".join(unique_ids)
@@ -210,7 +211,7 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
 
                 formated_data.append(new_row)
 
-        for failed_id in self._dict.failed_ids:
+        for failed_id in self.conversion_result.failed_ids:
             id = failed_id.id
             prefix, value = id.split(":")
             record = self.get_raw_record(id)
@@ -224,7 +225,7 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
             # If we allow the mixture strategy, we will keep the original record even if the id does not match the default prefix. So we don't have the failed data to return.
             if (
                 prefix == self.ontology_type.default
-                or self._dict.strategy == Strategy.MIXTURE
+                or self.conversion_result.strategy == Strategy.MIXTURE
             ):
                 formated_data.append(new_row)
             else:

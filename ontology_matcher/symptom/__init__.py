@@ -222,21 +222,21 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
     def __init__(
         self,
         filepath: Union[str, Path],
-        dict: Optional[ConversionResult] = None,
+        conversion_result: Optional[ConversionResult] = None,
         **kwargs,
     ) -> None:
         """Initialize the SymptomOntologyFormatter class.
 
         Args:
             filepath (Union[str, Path]): The path of the symptom ontology file. Only support csv and tsv file.
-            dict (ConversionResult, optional): The results of id conversion. Defaults to None.
+            conversion_result (ConversionResult, optional): The results of id conversion. Defaults to None.
             **kwargs: The keyword arguments for the Symptom class.
         """
         super().__init__(
             filepath,
             file_format_cls=SymptomOntologyFileFormat,
             ontology_converter=SymptomOntologyConverter,
-            dict=dict,
+            conversion_result=conversion_result,
             ontology_type=SYMPTOM_DICT,
             **kwargs,
         )
@@ -250,7 +250,7 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
         formated_data = []
         failed_formatted_data = []
 
-        for converted_id in self._dict.converted_ids:
+        for converted_id in self.conversion_result.converted_ids:
             raw_id = converted_id.get("raw_id")
             id = converted_id.get(SYMPTOM_DICT.default)
             record = self.get_raw_record(raw_id)
@@ -279,7 +279,7 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
 
                 formated_data.append(new_row)
 
-        for failed_id in self._dict.failed_ids:
+        for failed_id in self.conversion_result.failed_ids:
             id = failed_id.id
             prefix, value = id.split(":")
             record = self.get_raw_record(id)
@@ -293,7 +293,7 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
             # Keep the original record if the id match the default prefix.
             if (
                 prefix == self.ontology_type.default
-                or self._dict.strategy == Strategy.MIXTURE
+                or self.conversion_result.strategy == Strategy.MIXTURE
             ):
                 formated_data.append(new_row)
             else:

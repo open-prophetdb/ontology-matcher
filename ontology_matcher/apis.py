@@ -314,7 +314,6 @@ class MyGene:
 
 class EntityType(Enum):
     """The entity type."""
-
     COMPOUND = "compound"
     METABOLITE = "metabolite"
 
@@ -385,7 +384,7 @@ class MyChemical:
 
         self.q = q
         self.database = prefix
-        self.entity_type = entity_type
+        self.entity_type = "Compound" if entity_type == EntityType.COMPOUND else "Metabolite"
         self.scopes = self.SUPPORTED_SCOPES.get(prefix)
         self.params = kwargs
 

@@ -1,5 +1,5 @@
 import re
-import pickle
+import json
 import pandas as pd
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -97,6 +97,58 @@ class ConvertedId:
             return func()
         else:
             return self._getattr(key)
+
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, ConversionResult):
+            return {
+                "ids": obj.ids,
+                "strategy": "Mixture" if obj.strategy == Strategy.MIXTURE else "Unique",
+                "default_database": obj.default_database,
+                "converted_ids": obj.converted_ids,
+                "databases": obj.databases,
+                "database_url": obj.database_url,
+                "failed_ids": obj.failed_ids,
+            }
+        elif isinstance(obj, ConvertedId):
+            return obj.__dict__
+        elif isinstance(obj, FailedId):
+            return obj.__dict__
+        elif isinstance(obj, pd.DataFrame):
+            return obj.to_dict()
+
+        return super().default(obj)
+
+
+class CustomJSONDecoder(json.JSONDecoder):
+    def __init__(self, *args, **kwargs):
+        super().__init__(object_hook=self.object_hook, *args, **kwargs)
+
+    def object_hook(self, obj):
+        if "conversion_result" in obj:
+            return ConversionResult(
+                ids=obj["ids"],
+                strategy=Strategy.MIXTURE if obj["strategy"] == "Mixture" else Strategy.UNIQUE,
+                default_database=obj["default_database"],
+                converted_ids=obj["converted_ids"],
+                databases=obj["databases"],
+                database_url=obj["database_url"],
+                failed_ids=obj["failed_ids"],
+            )
+        elif "idx" in obj and "raw_id" in obj and "metadata" in obj:
+            return ConvertedId.from_args(**obj)
+        elif "idx" in obj and "id" in obj and "reason" in obj:
+            return FailedId(
+                idx=obj["idx"],
+                id=obj["id"],
+                reason=obj["reason"],
+            )
+        elif "data" in obj:
+            return pd.DataFrame.from_dict(obj["data"])
+        elif "formatted_data" in obj:
+            return pd.DataFrame.from_dict(obj["formatted_data"])
+        return obj
 
 
 @dataclass
@@ -343,30 +395,25 @@ class BaseOntologyFormatter(ABC):
         file_format_cls: Optional[Type[BaseOntologyFileFormat]] = None,
         ontology_type: Optional[OntologyType] = None,
         ontology_converter: Optional[Type[OntologyBaseConverter]] = None,
-        dict: Optional[ConversionResult] = None,
+        conversion_result: Optional[ConversionResult] = None,
         **kwargs,
     ) -> None:
         """Initialize the DiseaseOntologyFormatter class.
 
         Args:
             filepath (Union[str, Path]): The path of the disease ontology file. Only support csv and tsv file.
-            dict (ConversionResult, optional): The results of id conversion. Defaults to None.
+            conversion_result (ConversionResult, optional): The results of id conversion. Defaults to None.
             **kwargs: The keyword arguments for the Disease class.
         """
-        self._filepath = filepath
-        self._data = self._read_file()
-        self._formatted_data = None
-        self._failed_formatted_data = None
-
         if not ontology_type:
             raise Exception("The ontology type must be specified.")
         else:
-            self.ontology_type: OntologyType = ontology_type # type: ignore
+            self.ontology_type: OntologyType = ontology_type  # type: ignore
 
         if not file_format_cls:
             raise Exception("The format_cls must be specified.")
         else:
-            self.file_format_cls: Type[BaseOntologyFileFormat] = file_format_cls # type: ignore
+            self.file_format_cls: Type[BaseOntologyFileFormat] = file_format_cls  # type: ignore
 
         if not ontology_converter:
             raise Exception("The ontology converter must be specified.")
@@ -382,15 +429,22 @@ class BaseOntologyFormatter(ABC):
         #     if not attr.startswith("__") and not callable(getattr(self.file_format_cls, attr))
         # ]
 
+        self._filepath = filepath
+        self._data = self._read_file()
+        self._formatted_data = None
+        self._failed_formatted_data = None
+
         self._check_format()
 
         all_ids = self._data[self.file_format_cls.ID].tolist()
 
         print(f"Total number of IDs: {len(all_ids)}")
-        if dict is None:
-            self._dict = ontology_converter(ids=all_ids, **kwargs).convert()
+        if conversion_result is None:
+            self._conversion_result = ontology_converter(
+                ids=all_ids, **kwargs
+            ).convert()
         else:
-            self._dict = dict
+            self._conversion_result = conversion_result
 
     @property
     def data(self) -> pd.DataFrame:
@@ -405,8 +459,8 @@ class BaseOntologyFormatter(ABC):
         return self._failed_formatted_data
 
     @property
-    def dict(self) -> Optional[ConversionResult]:
-        return self._dict
+    def conversion_result(self) -> ConversionResult:
+        return self._conversion_result
 
     @property
     def filepath(self) -> Union[str, Path]:
@@ -421,7 +475,10 @@ class BaseOntologyFormatter(ABC):
         path = Path(self._filepath)
         ext = path.suffix.strip(".")
         delimiter = "," if ext == "csv" else "\t"
-        return pd.read_csv(path, delimiter=delimiter)
+        data = pd.read_csv(path, delimiter=delimiter)
+        # Remove the nan values
+        data = data[data[self.file_format_cls.ID].notna()]
+        return data
 
     def _check_format(self) -> bool:
         """Check the format of the disease ontology file.
@@ -511,7 +568,7 @@ class BaseOntologyFormatter(ABC):
         """Write the formatted data to the file.
 
         Args:
-            filepath (Union[str, Path]): The file path to write the formatted data. The file extension should be .tsv. Three files will be generated: the formatted data, the failed formatted data and the pickle file.
+            filepath (Union[str, Path]): The file path to write the formatted data. The file extension should be .tsv. Three files will be generated: the formatted data, the failed formatted data and the json file.
         """
         # Check the directory whether exists, if not, create it.
         if not Path(filepath).parent.exists():
@@ -531,16 +588,16 @@ class BaseOntologyFormatter(ABC):
             )
 
         obj = {
-            "dict": self._dict,
+            "conversion_result": self.conversion_result,
             "formatted_data": self._formatted_data,
             "failed_formatted_data": self._failed_formatted_data,
             "filepath": self._filepath,
             "data": self._data,
         }
 
-        # Pickle the object
-        with open(Path(filepath).with_suffix(".pkl"), "wb") as f:
-            pickle.dump(obj, f)
+        # Save the object
+        with open(Path(filepath).with_suffix(".json"), "w") as f:
+            json.dump(obj, f, cls=CustomJSONEncoder)
 
 
 class NoResultException(Exception):
