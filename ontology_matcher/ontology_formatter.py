@@ -489,7 +489,10 @@ class BaseOntologyFormatter(ABC):
             elif type(id) == str and id not in unique_ids:
                 unique_ids.append(id)
 
-        return list(set(unique_ids))
+        # Remove the empty ids
+        filtered_ids = filter(lambda x: x, unique_ids)
+
+        return list(set(filtered_ids))
 
     def format(self):
         """Format the disease ontology file.

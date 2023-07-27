@@ -665,9 +665,7 @@ class MyChemical:
             if key in x:
                 if isinstance(value, list):
                     x_value = x.get(key, [])
-                    if not isinstance(x_value, list):
-                        x_value = [x_value]
-                    x[key] = list(set(x_value + value))
+                    x[key] = self.concat(x_value, value)
                 elif isinstance(value, dict):
                     x_value = x.get(key, {})
                     if not isinstance(x_value, dict):

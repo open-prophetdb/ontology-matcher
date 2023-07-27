@@ -47,7 +47,9 @@ class CompoundOntologyConverter(OntologyBaseConverter):
 
         # More details on the database_url can be found here: https://docs.mychem.info/en/latest/
         self._database_url = "https://mychem.info"
-        logger.info("The formatter will use the MyChem API to convert the compound ids.")
+        logger.info(
+            "The formatter will use the MyChem API to convert the compound ids."
+        )
 
     @property
     def ontology_links(self) -> Dict[str, str]:
@@ -142,12 +144,21 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
         new_row[self.file_format_cls.DESCRIPTION] = metadata.get(
             "description"
         ) or new_row.get("description")
-        new_row[self.file_format_cls.SYNONYMS] = metadata.get(
-            "synonyms"
-        ) or new_row.get("synonyms")
-        new_row[self.file_format_cls.PMIDS] = metadata.get("pmids") or new_row.get(
-            "pmids"
-        )
+
+        synonyms = metadata.get("synonyms") or new_row.get("synonyms")
+
+        if synonyms and type(synonyms) == list:
+            new_row[self.file_format_cls.SYNONYMS] = "|".join(synonyms)
+        else:
+            new_row[self.file_format_cls.SYNONYMS] = synonyms
+
+        pmids = metadata.get("pmids") or new_row.get("pmids")
+
+        if pmids and type(pmids) == list:
+            new_row[self.file_format_cls.PMIDS] = "|".join(pmids)
+        else:
+            new_row[self.file_format_cls.PMIDS] = pmids
+
         new_row[self.file_format_cls.XREFS] = metadata.get("xrefs") or new_row.get(
             "xrefs"
         )
