@@ -22,7 +22,7 @@ from ontology_matcher.symptom.custom_types import SymptomOntologyFileFormat
 # MESH: Medical Subject Headings, https://www.nlm.nih.gov/mesh/
 # HP: Human Phenotype Ontology, https://hpo.jax.org/app/
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ontology_matcher.symptom")
 
 SYMPTOM_DICT = OntologyType(
     type="Symptom", default="MESH", choices=["SYMP", "MESH", "UMLS", "HP"]

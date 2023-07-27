@@ -17,7 +17,7 @@ from ontology_matcher.ontology_formatter import (
 )
 from ontology_matcher.gene.custom_types import GeneOntologyFileFormat
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ontology_matcher.gene")
 
 default_field_dict = {
     "ENTREZ": "entrezgene",

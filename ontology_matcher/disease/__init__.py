@@ -18,7 +18,7 @@ from ontology_matcher.ontology_formatter import (
 )
 from ontology_matcher.disease.custom_types import DiseaseOntologyFileFormat
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ontology_matcher.disease")
 
 DISEASE_DICT = OntologyType(
     type="Disease",

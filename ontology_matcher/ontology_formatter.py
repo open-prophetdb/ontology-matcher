@@ -128,7 +128,7 @@ def make_grouped_ids(ids: List[str]) -> GroupedIds:
     return GroupedIds(id_dict, id_idx_dict)
 
 
-def flatten_dedup(nested_list: List[List[str] | str]) -> List[str]:
+def flatten_dedup(nested_list: List[List[str] | str] | List[str]) -> List[str]:
     flat_list = []
     for sublist in nested_list:
         if isinstance(sublist, list):

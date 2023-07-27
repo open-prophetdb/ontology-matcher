@@ -14,7 +14,7 @@ from ontology_matcher.ontology_formatter import (
 )
 from ontology_matcher.compounds.custom_types import CompoundOntologyFileFormat
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ontology_matcher.compounds")
 
 COMPOUND_DICT = OntologyType(
     type="Compound",
@@ -70,6 +70,9 @@ class CompoundOntologyConverter(OntologyBaseConverter):
         self._ids = sorted(self._ids)
         for i in range(0, len(self._ids), self._batch_size):
             batch_ids = self._ids[i : i + self._batch_size]
+
+            logger.info("Processing %s to %s" % (i, i + self._batch_size))
+
             grouped_ids = make_grouped_ids(batch_ids)
 
             groups = grouped_ids.id_dict.keys()

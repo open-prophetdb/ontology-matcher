@@ -41,8 +41,12 @@ cli = click.Group()
 )
 @click.option("--batch-size", "-b", help="Batch size, default is 300.", default=300)
 @click.option("--sleep-time", "-s", help="Sleep time, default is 3.", default=3)
-def ontology(input_file, output_file, ontology_type, batch_size, sleep_time):
+@click.option("--debug", "-d", help="Debug mode", is_flag=True)
+def ontology(input_file, output_file, ontology_type, batch_size, sleep_time, debug=False):
     """Ontology matcher"""
+    if debug:
+        logger.setLevel(logging.DEBUG)
+
     ontology_formatter_cls: Union[
         Type[BaseOntologyFormatter], None
     ] = ONTOLOGY_DICT.get(ontology_type)

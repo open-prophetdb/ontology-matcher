@@ -7,9 +7,10 @@ from tenacity import retry, stop_after_attempt, wait_random
 from ontology_matcher.ontology_formatter import (
     ConvertedId,
     make_grouped_ids,
+    flatten_dedup,
 )
 
-logger = logging.getLogger("apis")
+logger = logging.getLogger("ontology_matcher.apis")
 
 
 @dataclass
@@ -321,6 +322,38 @@ class EntityType(Enum):
 class MyChemical:
     """A API wrapper for mychem.info. It can deal with common chemical ids. Such as pubchem, chebi, drugbank,  mesh, umls, pharmgkb, etc. So we can use it to convert the ids for metabolites, compounds etc. The http://cts.fiehnlab.ucdavis.edu/ is also a good choice, but it doesn't update frequently."""
 
+    DEFAULT_FEILDS = [
+        "chebi.xrefs.drugbank",
+        "chebi.xrefs.hmdb",
+        "chebi.xrefs.pubchem.cid",
+        "id",
+        "chebi.name",
+        "chebi.definition",
+        "chebi.synonyms",
+        "chebi.citation.pubmed",
+        "pubchem.cid",
+        "drugbank.name",
+        "drugbank.synonyms",
+        "drugbank.id",
+        "umls.name",
+        "umls.cui",
+        "umls.mesh",
+        "pharmgkb.name",
+        "pharmgkb.trade_names",
+        "pharmgkb.generic_names",
+        "pharmgkb.xrefs.chebi",
+        "pharmgkb.xrefs.drugbank",
+        "pharmgkb.xrefs.pubchem.cid",
+        "pharmgkb.xrefs.hmdb",
+        "pharmgkb.xrefs.mesh",
+        "pharmgkb.xrefs.umls",
+        "chembl.pref_name",
+        "chembl.molecule_chembl_id",
+        "chembl.molecule_synonyms",
+        "ginas.preferred_name",
+        "ginas.xrefs.MESH",
+    ]
+
     SUPPORTED_SCOPES = {
         "PUBCHEM": "pubchem.cid",
         "CHEBI": "chebi.id",
@@ -370,7 +403,7 @@ class MyChemical:
             "q": [x.split(":")[1] for x in self.q]
             if self.database != "CHEBI"
             else self.q,
-            "fields": "all",
+            "fields": ",".join(self.DEFAULT_FEILDS),
             "scopes": self.scopes,
             **self.params,
         }
@@ -379,7 +412,9 @@ class MyChemical:
         response = requests.post(self.api_endpoint, headers=headers, json=payload)
         return response.json()
 
-    def _convert2list(self, x: List[str] | str, database: str) -> List[str]:
+    def _convert2list(
+        self, x: List[List[str] | str] | List[str] | str, database: str
+    ) -> List[str]:
         def _add_prefix(x: str, database: str) -> str:
             # The CHEBI id has a prefix CHEBI, but the other ids don't have a prefix.
             if database == "CHEBI":
@@ -388,15 +423,16 @@ class MyChemical:
                 return f"{database}:{x}"
 
         if isinstance(x, list):
+            x = flatten_dedup(x)
             return list(map(lambda y: _add_prefix(y, database), x))
         elif isinstance(x, str):
             return [_add_prefix(x, database)]
         else:
             return []
 
-    def _get_chebi(self, chebi_data: dict) -> dict:
+    def _get_chebi(self, chebi_data: dict | List[Dict]) -> dict:
         """Get the chebi id from the data."""
-        if chebi_data:
+        if isinstance(chebi_data, dict):
             xrefs = chebi_data.get("xrefs", {})
             CHEMBL = self._convert2list(xrefs.get("chembl", []), "CHEMBL")
             DRUGBANK = self._convert2list(xrefs.get("drugbank", []), "DrugBank")
@@ -408,9 +444,9 @@ class MyChemical:
 
             return {
                 "metadata": {
-                    "name": chebi_data.get("name"),
-                    "description": chebi_data.get("definition"),
-                    "synonyms": chebi_data.get("synonyms"),
+                    "name": chebi_data.get("name", ""),
+                    "description": chebi_data.get("definition", ""),
+                    "synonyms": chebi_data.get("synonyms", []),
                     "pmids": chebi_data.get("citation", {}).get("pubmed", []),
                 },
                 "CHEBI": CHEBI,
@@ -419,91 +455,203 @@ class MyChemical:
                 "HMDB": HMDB,
                 "PUBCHEM": PUBCHEM,
             }
+        elif isinstance(chebi_data, list):
+            CHEBIS = []
+            DRUGBANKS = []
+            PUBCHEMS = []
+            CHEMBLS = []
+            HMDBS = []
+            for item in chebi_data:
+                xrefs = item.get("xrefs", {})
+                CHEBIS.extend(self._convert2list(item.get("id", ""), "CHEBI"))
+                DRUGBANKS.extend(
+                    self._convert2list(xrefs.get("drugbank", []), "DrugBank")
+                )
+                PUBCHEMS.extend(
+                    self._convert2list(
+                        xrefs.get("pubchem", {}).get("cid", []), "PUBCHEM"
+                    )
+                )
+                CHEMBLS.extend(self._convert2list(xrefs.get("chembl", []), "CHEMBL"))
+                HMDBS.extend(self._convert2list(xrefs.get("hmdb", []), "HMDB"))
+
+            return {
+                "metadata": {},
+                "CHEBI": CHEBIS,
+                "CHEMBL": CHEMBLS,
+                "DrugBank": DRUGBANKS,
+                "HMDB": HMDBS,
+                "PUBCHEM": PUBCHEMS,
+            }
+
         else:
             return {}
 
-    def _get_pubchem(self, pubchem_data: dict) -> dict:
+    def _get_pubchem(self, pubchem_data: dict | List[Dict]) -> dict:
         """Get the pubchem id from the data."""
-        if pubchem_data:
+        if isinstance(pubchem_data, dict):
             return {
                 "metadata": {},
                 "PUBCHEM": self._convert2list(pubchem_data.get("cid", {}), "PUBCHEM"),
             }
-        else:
-            return {}
+        elif isinstance(pubchem_data, list):
+            cids = []
+            for item in pubchem_data:
+                cids.extend(self._convert2list(item.get("cid", {}), "PUBCHEM"))
 
-    def _get_drugbank(self, drugbank_data: dict) -> dict:
-        """Get the drugbank id from the data."""
-        if drugbank_data:
             return {
-                "metadata": {
-                    "name": drugbank_data.get("name"),
-                    "synonyms": drugbank_data.get("synonyms"),
-                },
-                "DrugBank": self._convert2list(drugbank_data.get("id", {}), "DrugBank"),
+                "metadata": {},
+                "PUBCHEM": cids,
             }
         else:
             return {}
 
-    def _get_umls(self, umls_data: dict) -> dict:
-        """Get the umls id from the data."""
-        if umls_data:
+    def _get_drugbank(self, drugbank_data: dict | List[Dict]) -> dict:
+        """Get the drugbank id from the data."""
+        if isinstance(drugbank_data, dict):
             return {
                 "metadata": {
-                    "name": umls_data.get("name"),
+                    "name": drugbank_data.get("name", ""),
+                    "synonyms": drugbank_data.get("synonyms", []),
+                },
+                "DrugBank": self._convert2list(drugbank_data.get("id", {}), "DrugBank"),
+            }
+        elif isinstance(drugbank_data, list):
+            drugbank_ids = []
+            for item in drugbank_data:
+                drugbank_ids.extend(self._convert2list(item.get("id", {}), "DrugBank"))
+
+            return {
+                "metadata": {},
+                "DrugBank": drugbank_ids,
+            }
+        else:
+            return {}
+
+    def _get_umls(self, umls_data: dict | List[Dict]) -> dict:
+        """Get the umls id from the data."""
+        if isinstance(umls_data, dict):
+            return {
+                "metadata": {
+                    "name": umls_data.get("name", ""),
                 },
                 "UMLS": self._convert2list(umls_data.get("cui", {}), "UMLS"),
                 "MESH": self._convert2list(umls_data.get("mesh", {}), "MESH"),
             }
+        elif isinstance(umls_data, list):
+            umls_ids = []
+            mesh_ids = []
+            for item in umls_data:
+                umls_ids.extend(self._convert2list(item.get("cui", {}), "UMLS"))
+                mesh_ids.extend(self._convert2list(item.get("mesh", {}), "MESH"))
+
+            return {
+                "metadata": {},
+                "UMLS": umls_ids,
+                "MESH": mesh_ids,
+            }
         else:
             return {}
 
-    def _get_hmdb(self, pharmgkb_data: dict) -> dict:
+    def concat(self, x: str | List[str], y: str | List[str]) -> List[str]:
+        if isinstance(x, str):
+            x = [x]
+        if isinstance(y, str):
+            y = [y]
+
+        return list(set(x + y))
+
+    def _get_hmdb(self, pharmgkb_data: dict | List[Dict]) -> dict:
         """Get the hmdb id from the data. NOTICE: we cannot get hmdb data from the mychem.info directly. But we may can get the hmdb id from the pharmgkb data"""
-        if pharmgkb_data:
+        if isinstance(pharmgkb_data, dict):
             return {
                 "metadata": {
-                    "name": pharmgkb_data.get("name"),
-                    "synonyms": pharmgkb_data.get("trade_names", [])
-                    + pharmgkb_data.get("generic_names", []),
+                    "name": pharmgkb_data.get("name", ""),
+                    "synonyms": self.concat(
+                        pharmgkb_data.get("trade_names", []),
+                        pharmgkb_data.get("generic_names", []),
+                    ),
                 },
                 "HMDB": self._convert2list(
                     pharmgkb_data.get("xrefs", {}).get("hmdb", []), "HMDB"
                 ),
             }
+        elif isinstance(pharmgkb_data, list):
+            hmdb_ids = []
+            for item in pharmgkb_data:
+                hmdb_ids.extend(
+                    self._convert2list(item.get("xrefs", {}).get("hmdb", []), "HMDB")
+                )
+
+            return {
+                "metadata": {},
+                "HMDB": hmdb_ids,
+            }
         else:
             return {}
 
-    def _get_chembl(self, chembl_data: dict) -> dict:
+    def _get_chembl(self, chembl_data: dict | List[Dict]) -> dict:
         """Get the chembl id from the data."""
-        if chembl_data:
+        if isinstance(chembl_data, dict):
+            molecule_synonyms = chembl_data.get("molecule_synonyms", [])
+            if isinstance(molecule_synonyms, dict):
+                synonyms = flatten_dedup(
+                    list(molecule_synonyms.get("molecule_synonym", []))
+                )
+            elif isinstance(molecule_synonyms, list):
+                synonyms = list(
+                    map(
+                        lambda x: x.get("molecule_synonym"),
+                        chembl_data.get("molecule_synonyms", {}),
+                    )
+                )
+            else:
+                synonyms = []
+
             return {
                 "metadata": {
-                    "name": chembl_data.get("pref_name"),
-                    "synonyms": list(
-                        map(
-                            lambda x: x.get("molecule_synonym"),
-                            chembl_data.get("molecule_synonyms", {}),
-                        )
-                    ),
+                    "name": chembl_data.get("pref_name", ""),
+                    "synonyms": synonyms,
                 },
                 "CHEMBL": self._convert2list(
                     chembl_data.get("molecule_chembl_id", []), "CHEMBL"
                 ),
             }
+        elif isinstance(chembl_data, list):
+            chembl_ids = []
+            for item in chembl_data:
+                chembl_ids.extend(
+                    self._convert2list(item.get("molecule_chembl_id", []), "CHEMBL")
+                )
+
+            return {
+                "metadata": {},
+                "CHEMBL": chembl_ids,
+            }
         else:
             return {}
 
-    def _get_mesh(self, ginas_data: dict) -> dict:
+    def _get_mesh(self, ginas_data: dict | List[Dict]) -> dict:
         """Get the mesh id from the data."""
-        if ginas_data:
+        if isinstance(ginas_data, dict):
             return {
                 "metadata": {
-                    "name": ginas_data.get("preferred_name"),
+                    "name": ginas_data.get("preferred_name", ""),
                 },
                 "MESH": self._convert2list(
                     ginas_data.get("xrefs", {}).get("MESH", []), "MESH"
                 ),
+            }
+        elif isinstance(ginas_data, list):
+            mesh_ids = []
+            for item in ginas_data:
+                mesh_ids.extend(
+                    self._convert2list(item.get("xrefs", {}).get("MESH", []), "MESH")
+                )
+
+            return {
+                "metadata": {},
+                "MESH": mesh_ids,
             }
         else:
             return {}
@@ -516,9 +664,15 @@ class MyChemical:
         for key, value in y.items():
             if key in x:
                 if isinstance(value, list):
-                    x[key] = list(set(x[key] + value))
+                    x_value = x.get(key, [])
+                    if not isinstance(x_value, list):
+                        x_value = [x_value]
+                    x[key] = list(set(x_value + value))
                 elif isinstance(value, dict):
-                    x[key] = self._update_dict(x[key], value)
+                    x_value = x.get(key, {})
+                    if not isinstance(x_value, dict):
+                        x_value = {}
+                    x[key] = self._update_dict(x_value, value)
                 else:
                     x[key] = value
             else:
@@ -584,22 +738,26 @@ class MyChemical:
 
                 for doc in matched_docs:
                     result = self._update_dict(
-                        result, self._get_chebi(doc.get("chebi"))
+                        result, self._get_chebi(doc.get("chebi", {}))
                     )
                     result = self._update_dict(
-                        result, self._get_pubchem(doc.get("pubchem"))
+                        result, self._get_pubchem(doc.get("pubchem", {}))
                     )
                     result = self._update_dict(
-                        result, self._get_drugbank(doc.get("drugbank"))
-                    )
-                    result = self._update_dict(result, self._get_umls(doc.get("umls")))
-                    result = self._update_dict(
-                        result, self._get_hmdb(doc.get("pharmgkb"))
+                        result, self._get_drugbank(doc.get("drugbank", {}))
                     )
                     result = self._update_dict(
-                        result, self._get_chembl(doc.get("chembl"))
+                        result, self._get_umls(doc.get("umls", {}))
                     )
-                    result = self._update_dict(result, self._get_mesh(doc.get("ginas")))
+                    result = self._update_dict(
+                        result, self._get_hmdb(doc.get("pharmgkb", {}))
+                    )
+                    result = self._update_dict(
+                        result, self._get_chembl(doc.get("chembl", {}))
+                    )
+                    result = self._update_dict(
+                        result, self._get_mesh(doc.get("ginas", {}))
+                    )
 
                 result.update(
                     {
