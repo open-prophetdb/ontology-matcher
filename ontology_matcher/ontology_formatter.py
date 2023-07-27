@@ -126,16 +126,36 @@ class CustomJSONDecoder(json.JSONDecoder):
         super().__init__(object_hook=self.object_hook, *args, **kwargs)
 
     def object_hook(self, obj):
-        if "conversion_result" in obj:
-            return ConversionResult(
-                ids=obj["ids"],
-                strategy=Strategy.MIXTURE if obj["strategy"] == "Mixture" else Strategy.UNIQUE,
-                default_database=obj["default_database"],
-                converted_ids=obj["converted_ids"],
-                databases=obj["databases"],
-                database_url=obj["database_url"],
-                failed_ids=obj["failed_ids"],
-            )
+        if (
+            "conversion_result" in obj
+            and "formatted_data" in obj
+            and "failed_formatted_data" in obj
+            and "filepath" in obj
+            and "data" in obj
+        ):
+            data = pd.DataFrame.from_dict(obj["data"])
+            formatted_data = pd.DataFrame.from_dict(obj["formatted_data"])
+            failed_formatted_data = pd.DataFrame.from_dict(obj["failed_formatted_data"])
+            filepath = obj["filepath"]
+            cr = obj["conversion_result"]
+
+            return {
+                "conversion_result": ConversionResult(
+                    ids=cr["ids"],
+                    strategy=Strategy.MIXTURE
+                    if cr["strategy"] == "Mixture"
+                    else Strategy.UNIQUE,
+                    default_database=cr["default_database"],
+                    converted_ids=cr["converted_ids"],
+                    databases=cr["databases"],
+                    database_url=cr["database_url"],
+                    failed_ids=cr["failed_ids"],
+                ),
+                "formatted_data": formatted_data,
+                "failed_formatted_data": failed_formatted_data,
+                "filepath": filepath,
+                "data": data,
+            }
         elif "idx" in obj and "raw_id" in obj and "metadata" in obj:
             return ConvertedId.from_args(**obj)
         elif "idx" in obj and "id" in obj and "reason" in obj:
@@ -144,10 +164,7 @@ class CustomJSONDecoder(json.JSONDecoder):
                 id=obj["id"],
                 reason=obj["reason"],
             )
-        elif "data" in obj:
-            return pd.DataFrame.from_dict(obj["data"])
-        elif "formatted_data" in obj:
-            return pd.DataFrame.from_dict(obj["formatted_data"])
+
         return obj
 
 
@@ -596,8 +613,10 @@ class BaseOntologyFormatter(ABC):
         }
 
         # Save the object
-        with open(Path(filepath).with_suffix(".json"), "w") as f:
-            json.dump(obj, f, cls=CustomJSONEncoder)
+        json_file = Path(filepath).with_suffix(".json")
+        if not json_file.exists():
+            with open(json_file, "w") as f:
+                json.dump(obj, f, cls=CustomJSONEncoder)
 
 
 class NoResultException(Exception):

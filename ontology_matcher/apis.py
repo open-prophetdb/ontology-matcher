@@ -321,11 +321,12 @@ class EntityType(Enum):
 class MyChemical:
     """A API wrapper for mychem.info. It can deal with common chemical ids. Such as pubchem, chebi, drugbank,  mesh, umls, pharmgkb, etc. So we can use it to convert the ids for metabolites, compounds etc. The http://cts.fiehnlab.ucdavis.edu/ is also a good choice, but it doesn't update frequently."""
 
+    # More details on fields: https://docs.mychem.info/en/latest/doc/data.html#available-fields
     DEFAULT_FEILDS = [
         "chebi.xrefs.drugbank",
         "chebi.xrefs.hmdb",
         "chebi.xrefs.pubchem.cid",
-        "id",
+        "chebi.id",
         "chebi.name",
         "chebi.definition",
         "chebi.synonyms",
@@ -354,12 +355,12 @@ class MyChemical:
     ]
 
     SUPPORTED_SCOPES = {
-        "PUBCHEM": "pubchem.cid",
-        "CHEBI": "chebi.id",
+        "PUBCHEM": "pubchem.cid,pharmgkb.xrefs.pubchem.cid",
+        "CHEBI": "chebi.id,pharmgkb.xrefs.chebi",
         "MESH": "umls.mesh,pharmgkb.xrefs.mesh,ginas.xrefs.MESH,chembl.drug_indications.mesh_id",
-        "DrugBank": "drugbank.id",
-        "UMLS": "umls.cui",
-        "HMDB": "hmdb.accession",
+        "DrugBank": "drugbank.id,pharmgkb.xrefs.drugbank",
+        "UMLS": "umls.cui,pharmgkb.xrefs.umls",
+        "HMDB": "unichem.hmdb,pharmgkb.xrefs.hmdb,chebi.xrefs.hmdb",
         "CHEMBL": "chembl.molecule_chembl_id",
     }
 

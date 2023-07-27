@@ -12,9 +12,9 @@ from ontology_matcher.ontology_formatter import (
     BaseOntologyFormatter,
     make_grouped_ids,
 )
-from ontology_matcher.compounds.custom_types import CompoundOntologyFileFormat
+from ontology_matcher.compound.custom_types import CompoundOntologyFileFormat
 
-logger = logging.getLogger("ontology_matcher.compounds")
+logger = logging.getLogger("ontology_matcher.compound")
 
 COMPOUND_DICT = OntologyType(
     type="Compound",
