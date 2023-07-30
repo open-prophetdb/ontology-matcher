@@ -83,12 +83,11 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
             None
         """
         search_results = response.get("_embedded", {}).get("searchResults", [])
-        if len(search_results) == 0:
-            raise NoResultException()
 
-        logger.info(
-            "Batch size: %s, results size: %s" % (len(batch_ids), len(search_results))
-        )
+        if len(search_results) == 0:
+            logger.debug("No results found, we will try to fetch the data again.")
+            raise NoResultException("No results found.")
+
         for index, id in enumerate(batch_ids):
             prefix, value = id.split(":")
             if prefix not in self.databases:
@@ -100,7 +99,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
                 self._failed_ids.append(failed_id)
                 continue
 
-            result = search_results[index]
+            result = search_results[index] if len(search_results) > 0 else {}
             mapping_response_list = result.get("mappingResponseList", [])
             if len(mapping_response_list) == 0:
                 failed_id = FailedId(idx=index, id=id, reason="No results found")
@@ -108,6 +107,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
                 continue
             else:
                 converted_id_dict = {}
+                converted_id_dict["idx"] = index
                 converted_id_dict[prefix] = id
                 converted_id_dict["raw_id"] = id
                 # OxO don't provide any metadata for the disease ontology. So we will update the metadata later by using the OLS API.
@@ -128,7 +128,6 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
                             f'{choice}:{x.get("curie").split(":")[1]}' for x in matched
                         ]
                         converted_id_dict[choice] = converted_ids
-                        converted_id_dict["idx"] = index
 
                         if choice == self.default_database and len(converted_ids) > 1:
                             failed_id = FailedId(
@@ -155,7 +154,6 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
                 if converted_id_dict:
                     self.add_converted_id(converted_id_dict)
 
-    @retry(stop=stop_after_attempt(5), wait=wait_random(min=1, max=15))
     def _fetch_ids(self, ids) -> dict:
         """Fetch the ids from the OXO API.
 
@@ -185,7 +183,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
 
         return results.json()
 
-    @retry(stop=stop_after_attempt(5), wait=wait_random(min=1, max=15))
+    @retry(stop=stop_after_attempt(15), wait=wait_random(min=1, max=15))
     def _fetch_format_data(self, ids: List[str]) -> None:
         """Fetch and format the ids.
 
@@ -207,6 +205,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
         # Cannot use the parallel processing, otherwise the index order will not be correct.
         for i in range(0, len(self._ids), self._batch_size):
             batch_ids = self._ids[i : i + self._batch_size]
+            logger.info("Finish %s/%s" % (i, len(self._ids)))
             self._fetch_format_data(batch_ids)
             self._converted_ids = MyDisease.update_metadata(
                 self._converted_ids, self.default_database
@@ -249,6 +248,14 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
             **kwargs,
         )
 
+    def concat(self, x: str | List[str], y: str | List[str]) -> List[str]:
+        if isinstance(x, str):
+            x = [x]
+        if isinstance(y, str):
+            y = [y]
+
+        return list(set(x + y))
+
     def _format_by_metadata(
         self, new_row: Dict[str, Any], metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
@@ -256,9 +263,12 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
         new_row[self.file_format_cls.DESCRIPTION] = metadata.get(
             "description"
         ) or new_row.get("description")
-        new_row[self.file_format_cls.SYNONYMS] = metadata.get(
-            "synonyms"
-        ) or new_row.get("synonyms")
+        new_row[self.file_format_cls.SYNONYMS] = self.concat(
+            metadata.get("synonyms", []), new_row.get("synonyms", [])
+        )
+        new_row[self.file_format_cls.XREFS] = self.concat(
+            metadata.get("xrefs", []), new_row.get("xrefs", [])
+        )
         return new_row
 
     def format(self):

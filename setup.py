@@ -10,7 +10,8 @@ with open("README.md") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
-requirements = ["Click>=7.0", "pandas", "mygene>=3.2.2"]
+with open("requirements.txt") as f:
+    requirements = f.read().splitlines()
 
 test_requirements = []
 

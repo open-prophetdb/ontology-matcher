@@ -19,7 +19,7 @@ logger = logging.getLogger("ontology_matcher.compound")
 COMPOUND_DICT = OntologyType(
     type="Compound",
     default="DrugBank",
-    choices=["DrugBank", "PUBCHEM", "CHEBI", "MESH", "UMLS", "CHEMBL"],
+    choices=["DrugBank", "PUBCHEM", "CHEBI", "MESH", "UMLS", "CHEMBL", "HMDB"],
 )
 
 

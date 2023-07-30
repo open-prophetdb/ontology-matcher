@@ -101,11 +101,6 @@ class GeneOntologyConverter(OntologyBaseConverter):
         if search_results.empty:
             raise NoResultException()
 
-        logger.info(
-            "Batch size: %s, results size: %s"
-            % (len(batch_ids), search_results.shape[0])
-        )
-
         def list_or_str(x):
             x = list(set(x))
             if type(x) == list and len(x) == 1:
@@ -261,6 +256,7 @@ class GeneOntologyConverter(OntologyBaseConverter):
         # Cannot use the parallel processing, otherwise the index order will not be correct.
         for i in range(0, len(self.ids), self.batch_size):
             batch_ids = self.ids[i : i + self.batch_size]
+            logger.info("Finish %s/%s" % (i, len(self.ids)))
             response = self._fetch_ids(batch_ids)
             self._format_response(response, batch_ids)
             time.sleep(self.sleep_time)

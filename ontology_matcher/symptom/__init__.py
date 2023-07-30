@@ -63,7 +63,7 @@ class SymptomOntologyConverter(OntologyBaseConverter):
             "SYMP": "https://bioportal.bioontology.org/ontologies/SYMP",
             "HP": "https://hpo.jax.org/app/",
         }
-    
+
     @retry(stop=stop_after_attempt(5), wait=wait_random(min=1, max=15))
     def _fetch_format_data(self, ids: List[str]) -> None:
         """Fetch and format the ids.
@@ -94,9 +94,6 @@ class SymptomOntologyConverter(OntologyBaseConverter):
         if len(search_results) == 0:
             raise NoResultException()
 
-        logger.info(
-            "Batch size: %s, results size: %s" % (len(batch_ids), len(search_results))
-        )
         for index, id in enumerate(batch_ids):
             prefix, value = id.split(":")
             if prefix not in self.databases:
@@ -202,6 +199,7 @@ class SymptomOntologyConverter(OntologyBaseConverter):
         # Cannot use the parallel processing, otherwise the index order will not be correct.
         for i in range(0, len(self._ids), self._batch_size):
             batch_ids = self._ids[i : i + self._batch_size]
+            logger.info("Finish %s/%s" % (i, len(self._ids)))
             self._fetch_format_data(batch_ids)
             time.sleep(self._sleep_time)
 

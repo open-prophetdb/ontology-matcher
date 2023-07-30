@@ -17,7 +17,8 @@ logger = logging.getLogger("ontology_matcher.apis")
 class Entity:
     """Entity class."""
 
-    synonyms: str
+    synonyms: List[str]
+    xrefs: List[str]
     description: str
     id: str
     name: str
@@ -201,11 +202,12 @@ class OLS4Query:
                 results.append(
                     Entity(
                         **{
-                            "synonyms": "",
+                            "synonyms": [],
                             "description": "",
                             "id": raw_item,
                             "name": "",
                             "resource": raw_item.split(":")[0],
+                            "xrefs": [],
                         }
                     )
                 )
@@ -214,11 +216,12 @@ class OLS4Query:
                 results.append(
                     Entity(
                         **{
-                            "synonyms": "|".join(matched_doc.get("synonym")),
+                            "synonyms": matched_doc.get("synonym"),
                             "description": "\n".join(matched_doc.get("description")),
                             "id": raw_item,
                             "name": matched_doc.get("label"),
                             "resource": raw_item.split(":")[0],
+                            "xrefs": [],
                         }
                     )
                 )
@@ -314,6 +317,7 @@ class MyGene:
 
 class EntityType(Enum):
     """The entity type."""
+
     COMPOUND = "compound"
     METABOLITE = "metabolite"
 
@@ -385,7 +389,9 @@ class MyChemical:
 
         self.q = q
         self.database = prefix
-        self.entity_type = "Compound" if entity_type == EntityType.COMPOUND else "Metabolite"
+        self.entity_type = (
+            "Compound" if entity_type == EntityType.COMPOUND else "Metabolite"
+        )
         self.scopes = self.SUPPORTED_SCOPES.get(prefix)
         self.params = kwargs
 
@@ -830,6 +836,43 @@ class MyDisease:
         response = requests.post(self.api_endpoint, headers=headers, json=payload)
         return response.json()
 
+    def format_xrefs(self, xrefs: dict) -> List[str]:
+        doid = flatten_dedup(xrefs.get("doid", []))
+        mesh = list(
+            map(lambda x: "MESH:%s" % x, flatten_dedup([xrefs.get("mesh", [])]))
+        )
+
+        orphanet = list(
+            map(lambda x: "ORDO:%s" % x, flatten_dedup(xrefs.get("orphanet", [])))
+        )
+        ordo = list(map(lambda x: "ORDO:%s" % x, flatten_dedup(xrefs.get("ordo", []))))
+        ordo = list(set(orphanet + ordo))
+
+        umls = list(map(lambda x: "UMLS:%s" % x, flatten_dedup(xrefs.get("umls", []))))
+        umls_cui = list(
+            map(lambda x: "UMLS:%s" % x, flatten_dedup(xrefs.get("umls_cui", [])))
+        )
+        umls = list(set(umls + umls_cui))
+
+        icd9 = list(map(lambda x: "ICD-9:%s" % x, flatten_dedup(xrefs.get("icd9", []))))
+        icd9cm = list(
+            map(lambda x: "ICD-9:%s" % x, flatten_dedup(xrefs.get("icd9cm", [])))
+        )
+        icd9 = list(set(icd9 + icd9cm))
+
+        icd10 = list(
+            map(lambda x: "ICD10CM:%s" % x, flatten_dedup(xrefs.get("icd10", [])))
+        )
+        icd10cm = list(
+            map(lambda x: "ICD10CM:%s" % x, flatten_dedup(xrefs.get("icd10cm", [])))
+        )
+        icd10 = list(set(icd10 + icd10cm))
+
+        hp = list(map(lambda x: "HP:%s" % x, flatten_dedup(xrefs.get("hp", []))))
+        omim = list(map(lambda x: "OMIM:%s" % x, flatten_dedup(xrefs.get("omim", []))))
+
+        return list(set(doid + mesh + orphanet + umls + icd9 + icd10 + hp + omim))
+
     def parse(self) -> List[Entity]:
         """Parse the response data.
 
@@ -852,11 +895,12 @@ class MyDisease:
                 results.append(
                     Entity(
                         **{
-                            "synonyms": "",
+                            "synonyms": [],
                             "description": "",
                             "id": item,
                             "name": "",
                             "resource": item.split(":")[0],
+                            "xrefs": [],
                         }
                     )
                 )
@@ -866,27 +910,31 @@ class MyDisease:
                 do = matched_doc.get("disease_ontology")
                 name = ""
                 synonyms = []
+                xrefs = []
                 description = ""
 
                 if mondo:
                     name = mondo.get("label")
                     synonyms = mondo.get("synonym", {}).get("exact", [])
                     description = mondo.get("definition", "")
+                    xrefs = self.format_xrefs(mondo.get("xrefs", {}))
                 elif do:
                     name = do.get("name")
                     synonyms = do.get("synonyms", {}).get("exact", [])
                     description = do.get("def", "")
+                    xrefs = self.format_xrefs(do.get("xrefs", {}))
 
                 results.append(
                     Entity(
                         **{
-                            "synonyms": "|".join(
-                                synonyms if isinstance(synonyms, list) else [synonyms]
-                            ),
+                            "synonyms": synonyms
+                            if isinstance(synonyms, list)
+                            else [synonyms],
                             "description": description,
                             "id": item,
                             "name": name,
                             "resource": item.split(":")[0],
+                            "xrefs": xrefs,
                         }
                     )
                 )
