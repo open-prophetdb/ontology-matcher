@@ -199,8 +199,9 @@ class SymptomOntologyConverter(OntologyBaseConverter):
         # Cannot use the parallel processing, otherwise the index order will not be correct.
         for i in range(0, len(self._ids), self._batch_size):
             batch_ids = self._ids[i : i + self._batch_size]
-            logger.info("Finish %s/%s" % (i, len(self._ids)))
             self._fetch_format_data(batch_ids)
+
+            logger.info("Finish %s/%s" % (i + self._batch_size, len(self._ids)))
             time.sleep(self._sleep_time)
 
         return ConversionResult(
@@ -299,10 +300,10 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
                 failed_formatted_data.append(new_row)
 
         if len(formated_data) > 0:
-            self._formatted_data = pd.DataFrame(formated_data)
+            self._formatted_data = pd.DataFrame(formated_data, dtype=str)
 
         if len(failed_formatted_data) > 0:
-            self._failed_formatted_data = pd.DataFrame(failed_formatted_data)
+            self._failed_formatted_data = pd.DataFrame(failed_formatted_data, dtype=str)
 
         return self
 

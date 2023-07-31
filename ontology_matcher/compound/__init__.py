@@ -233,10 +233,10 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
                 failed_formatted_data.append(new_row)
 
         if len(formated_data) > 0:
-            self._formatted_data = pd.DataFrame(formated_data)
+            self._formatted_data = pd.DataFrame(formated_data, dtype=str)
 
         if len(failed_formatted_data) > 0:
-            self._failed_formatted_data = pd.DataFrame(failed_formatted_data)
+            self._failed_formatted_data = pd.DataFrame(failed_formatted_data, dtype=str)
 
         return self
 

@@ -256,9 +256,10 @@ class GeneOntologyConverter(OntologyBaseConverter):
         # Cannot use the parallel processing, otherwise the index order will not be correct.
         for i in range(0, len(self.ids), self.batch_size):
             batch_ids = self.ids[i : i + self.batch_size]
-            logger.info("Finish %s/%s" % (i, len(self.ids)))
             response = self._fetch_ids(batch_ids)
             self._format_response(response, batch_ids)
+
+            logger.info("Finish %s/%s" % (i + self.batch_size, len(self.ids)))
             time.sleep(self.sleep_time)
 
         return ConversionResult(
@@ -395,10 +396,10 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
                 failed_formatted_data.append(new_row)
 
         if len(formated_data) > 0:
-            self._formatted_data = pd.DataFrame(formated_data)
+            self._formatted_data = pd.DataFrame(formated_data, dtype=str)
 
         if len(failed_formatted_data) > 0:
-            self._failed_formatted_data = pd.DataFrame(failed_formatted_data)
+            self._failed_formatted_data = pd.DataFrame(failed_formatted_data, dtype=str)
 
         return self
 

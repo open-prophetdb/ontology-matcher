@@ -4,6 +4,7 @@ import click
 import logging
 import coloredlogs
 import verboselogs
+import requests_cache
 from typing import Type, Union
 from ontology_matcher import (
     ONTOLOGY_DICT,
@@ -14,12 +15,7 @@ from ontology_matcher import (
 )
 from ontology_matcher.ontology_formatter import CustomJSONDecoder
 
-verboselogs.install()
-# Use the logger name instead of the module name
-coloredlogs.install(
-    fmt="%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger("cli")
+logger = logging.getLogger("ontology_matcher.cli")
 
 cli = click.Group()
 
@@ -41,12 +37,15 @@ cli = click.Group()
 )
 @click.option("--batch-size", "-b", help="Batch size, default is 300.", default=300)
 @click.option("--sleep-time", "-s", help="Sleep time, default is 3.", default=3)
-@click.option("--debug", "-d", help="Debug mode", is_flag=True)
+@click.option("--debug", "-d", help="Debug mode", is_flag=True, default=False)
 @click.option(
     "--reformat",
     "-r",
     help="Rerun the formatter, but not fetching the data again.",
     is_flag=True,
+)
+@click.option(
+    "--disable-cache", "-D", help="Disable the cache", is_flag=True, default=False
 )
 def ontology(
     input_file,
@@ -56,10 +55,42 @@ def ontology(
     sleep_time,
     debug=False,
     reformat=False,
+    disable_cache=False,
 ):
     """Ontology matcher"""
     if debug:
-        logger.setLevel(logging.DEBUG)
+        logger.info("Enable the debug mode.")
+
+    verboselogs.install()
+    # Use the logger name instead of the module name
+    coloredlogs.install(
+        level=logging.DEBUG if debug else logging.INFO,
+        fmt="%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s",
+    )
+
+    if not disable_cache:
+        logger.info("Enable the cache, you can use --disable-cache to disable it.")
+        dbfile = os.path.join(os.path.curdir, "ontology_matcher_cache.sqlite")
+        logger.info(
+            f"The cache file is {dbfile}, if you encounter any problem, you can delete it or disable cache and rerun the command."
+        )
+
+        requests_cache.install_cache(
+            cache_name="ontology_matcher_cache",
+            backend="sqlite",
+            allowable_methods=(
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "HEAD",
+                "OPTIONS",
+                "TRACE",
+            ),
+            allowable_codes=(200, 201, 202, 203, 204, 205, 206, 207, 208, 226),
+        )
+        logging.getLogger("requests_cache").setLevel(logging.DEBUG)
+        logger.debug("Enable the logging for requests_cache.")
 
     ontology_formatter_cls: Union[
         Type[BaseOntologyFormatter], None
@@ -71,16 +102,22 @@ def ontology(
     if reformat:
         json_file = output_file.replace(".tsv", ".json")
         if not os.path.isfile(json_file):
-            raise ValueError("Cannot find the json file, please rerun the command without --reformat flag.")
+            raise ValueError(
+                "Cannot find the json file, please rerun the command without --reformat flag."
+            )
         else:
             saved_data = json.load(open(json_file, "r"), cls=CustomJSONDecoder)
             conversion_result = saved_data.get("conversion_result")
 
             if conversion_result is None:
-                logger.warning("Cannot find the conversion result in the json file, so we will fetch the data again.")
+                logger.warning(
+                    "Cannot find the conversion result in the json file, so we will fetch the data again."
+                )
 
     elif os.path.exists(output_file):
-        raise ValueError("The output file already exists, if you want to reformat, please add --reformat flag or delete the output file and the json file, then rerun the command.")
+        raise ValueError(
+            "The output file already exists, if you want to reformat, please add --reformat flag or delete the output file and the json file, then rerun the command."
+        )
 
     ontology_formatter = ontology_formatter_cls(
         filepath=input_file,
@@ -89,6 +126,7 @@ def ontology(
         conversion_result=conversion_result,
     )
     ontology_formatter.format()
+    ontology_formatter.save_to_json(output_file)
     ontology_formatter.write(output_file)
 
 

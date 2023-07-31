@@ -2,6 +2,7 @@ import re
 import time
 import logging
 import requests
+import requests_cache
 import pandas as pd
 from tenacity import retry, stop_after_attempt, wait_random
 from pathlib import Path
@@ -168,6 +169,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
             "Content-Type": "application/json",
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36",
         }
+
         results = requests.post(
             self._database_url,
             headers=headers,
@@ -205,11 +207,12 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
         # Cannot use the parallel processing, otherwise the index order will not be correct.
         for i in range(0, len(self._ids), self._batch_size):
             batch_ids = self._ids[i : i + self._batch_size]
-            logger.info("Finish %s/%s" % (i, len(self._ids)))
             self._fetch_format_data(batch_ids)
             self._converted_ids = MyDisease.update_metadata(
                 self._converted_ids, self.default_database
             )
+
+            logger.info("Finish %s/%s" % (i + self._batch_size, len(self._ids)))
             time.sleep(self._sleep_time)
 
         return ConversionResult(
@@ -249,10 +252,17 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
         )
 
     def concat(self, x: str | List[str], y: str | List[str]) -> List[str]:
-        if isinstance(x, str):
-            x = [x]
-        if isinstance(y, str):
-            y = [y]
+        if x:
+            if isinstance(x, str):
+                x = [x]
+        else:
+            x = []
+
+        if y:
+            if isinstance(y, str):
+                y = [y]
+        else:
+            y = []
 
         return list(set(x + y))
 
@@ -339,10 +349,10 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
                 failed_formatted_data.append(new_row)
 
         if len(formated_data) > 0:
-            self._formatted_data = pd.DataFrame(formated_data)
+            self._formatted_data = pd.DataFrame(formated_data, dtype=str)
 
         if len(failed_formatted_data) > 0:
-            self._failed_formatted_data = pd.DataFrame(failed_formatted_data)
+            self._failed_formatted_data = pd.DataFrame(failed_formatted_data, dtype=str)
 
         return self
 

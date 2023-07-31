@@ -492,7 +492,7 @@ class BaseOntologyFormatter(ABC):
         path = Path(self._filepath)
         ext = path.suffix.strip(".")
         delimiter = "," if ext == "csv" else "\t"
-        data = pd.read_csv(path, delimiter=delimiter)
+        data = pd.read_csv(path, delimiter=delimiter, dtype=str)
         # Remove the nan values
         data = data[data[self.file_format_cls.ID].notna()]
         return data
@@ -531,7 +531,7 @@ class BaseOntologyFormatter(ABC):
                 "Cannot find the related record, please check your id. you may need to use the raw id not the converted id."
             )
         elif len(records) > 1:
-            return pd.DataFrame(records[0])
+            return pd.DataFrame(records[0], dtype=str)
         else:
             return records
 
@@ -580,6 +580,21 @@ class BaseOntologyFormatter(ABC):
     def filter(self) -> pd.DataFrame:
         """Filter the invalid data."""
         raise NotImplementedError
+    
+    def save_to_json(self, filepath: Union[str, Path]):
+        obj = {
+            "conversion_result": self.conversion_result,
+            "formatted_data": self._formatted_data,
+            "failed_formatted_data": self._failed_formatted_data,
+            "filepath": self._filepath,
+            "data": self._data,
+        }
+
+        # Save the object
+        json_file = Path(filepath).with_suffix(".json")
+        if not json_file.exists():
+            with open(json_file, "w") as f:
+                json.dump(obj, f, cls=CustomJSONEncoder)
 
     def write(self, filepath: Union[str, Path]):
         """Write the formatted data to the file.
@@ -604,19 +619,7 @@ class BaseOntologyFormatter(ABC):
                 Path(filepath).with_suffix(".failed.tsv"), sep="\t", index=False
             )
 
-        obj = {
-            "conversion_result": self.conversion_result,
-            "formatted_data": self._formatted_data,
-            "failed_formatted_data": self._failed_formatted_data,
-            "filepath": self._filepath,
-            "data": self._data,
-        }
-
-        # Save the object
-        json_file = Path(filepath).with_suffix(".json")
-        if not json_file.exists():
-            with open(json_file, "w") as f:
-                json.dump(obj, f, cls=CustomJSONEncoder)
+        self.save_to_json(filepath)
 
 
 class NoResultException(Exception):

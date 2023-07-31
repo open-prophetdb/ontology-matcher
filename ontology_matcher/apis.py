@@ -197,7 +197,6 @@ class OLS4Query:
                 )
             )
 
-            logger.debug("Matched docs: %s" % matched_docs)
             if len(matched_docs) == 0:
                 results.append(
                     Entity(
@@ -414,7 +413,7 @@ class MyChemical:
             **self.params,
         }
 
-        logger.debug("Payload: %s" % payload)
+        # logger.debug("Payload: %s" % payload)
         response = requests.post(self.api_endpoint, headers=headers, json=payload)
         return response.json()
 
@@ -704,7 +703,6 @@ class MyChemical:
 
             return list(set(xrefs))
 
-        # logger.debug("Data: %s" % self.data)
         results: List[Dict[str, Any]] = []
         for index, item in enumerate(self.q):
             # Find the matched doc by the q value
@@ -717,7 +715,6 @@ class MyChemical:
                 )
             )
 
-            # logger.debug("Matched docs: %s" % matched_docs)
             if len(matched_docs) == 0:
                 results.append(
                     {
@@ -832,7 +829,7 @@ class MyDisease:
             **self.params,
         }
 
-        logger.debug("Payload: %s" % payload)
+        # logger.debug("Payload: %s" % payload)
         response = requests.post(self.api_endpoint, headers=headers, json=payload)
         return response.json()
 
@@ -879,7 +876,6 @@ class MyDisease:
         Example:
         http://mydisease.info/v1/disease/MONDO:0016575
         """
-        logger.debug("Data: %s" % self.data)
         results: List[Entity] = []
         for item in self.q:
             # Find the matched doc by the q value
@@ -890,7 +886,6 @@ class MyDisease:
                 )
             )
 
-            logger.debug("Matched docs: %s" % matched_docs)
             if len(matched_docs) == 0:
                 results.append(
                     Entity(
@@ -961,7 +956,7 @@ class MyDisease:
             if get_id(x.get(database))
         }
         ids = list(selected_id_pair.values())
-        logger.debug("Ids: %s" % ids)
+        # logger.debug("Ids: %s" % ids)
         grouped_ids = make_grouped_ids(ids)
         id_dict = grouped_ids.id_dict
 
@@ -969,7 +964,7 @@ class MyDisease:
         groups = id_dict.keys()
         valid_keys = set(groups).intersection(set(cls.SUPPORTED_SCOPES.keys()))
 
-        logger.debug("Valid keys: %s" % valid_keys)
+        # logger.debug("Valid keys: %s" % valid_keys)
 
         for group in valid_keys:
             ids = [f"{group}:{x}" for x in id_dict.get(group, [])]
@@ -980,14 +975,14 @@ class MyDisease:
             for index, result in enumerate(results):
                 matched = converted_ids[index]
 
-                logger.debug(
-                    "Matched ConvertedId: %s, %s, %s"
-                    % (
-                        matched,
-                        list(map(lambda x: x.get(database), converted_ids)),
-                        result.id,
-                    ),
-                )
+                # logger.debug(
+                #     "Matched ConvertedId: %s, %s, %s"
+                #     % (
+                #         matched,
+                #         list(map(lambda x: x.get(database), converted_ids)),
+                #         result.id,
+                #     ),
+                # )
 
                 matched.update_metadata(result.__dict__)
 
