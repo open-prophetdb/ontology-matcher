@@ -605,6 +605,112 @@ class BaseOntologyFormatter(ABC):
         """
         raise NotImplementedError
 
+    def format_by_metadata(
+        self, new_row: Dict[str, Any], metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Format the row by metadata. If you want to add more columns, you can override this method.
+        """
+        new_row[self.file_format_cls.NAME] = metadata.get("name") or new_row.get("name")
+        new_row[self.file_format_cls.DESCRIPTION] = metadata.get(
+            "description"
+        ) or new_row.get("description")
+        new_row[self.file_format_cls.SYNONYMS] = self.concat(
+            metadata.get("synonyms", []), new_row.get("synonyms", [])
+        )
+        new_row[self.file_format_cls.XREFS] = self.concat(
+            metadata.get("xrefs", []), new_row.get("xrefs", [])
+        )
+        return new_row
+
+    def default_format(self):
+        """Format the ontology file. If you don't any specified format, you can use this method to format the ontology file. For example, you implement the format method and call this method in the format method.
+
+        Returns:
+            self: The OntologyFormatter instance.
+        """
+        formated_data = []
+        failed_formatted_data = []
+
+        total = len(self.conversion_result.converted_ids)
+        logger.info(
+            "Start formatting the disease ontology file, which contains %s rows."
+            % total
+        )
+        for index, converted_id in enumerate(self.conversion_result.converted_ids):
+            logger.info("Processing %s/%s" % (index + 1, total))
+            raw_id = converted_id.get("raw_id")
+            id = converted_id.get(self.ontology_type.default)
+            record = self.get_raw_record(raw_id)
+            columns = self._expected_columns + self._optional_columns
+            new_row = {key: self.format_record_value(record, key) for key in columns}
+
+            metadata = converted_id.get_metadata()
+
+            if metadata:
+                new_row = self.format_by_metadata(new_row, metadata)
+
+            # Keep the original record if the id does not match the default prefix.
+            unique_ids = self.get_alias_ids(converted_id)
+            xrefs = self.concat(unique_ids, new_row.get(self.file_format_cls.XREFS, []))
+
+            synonyms = new_row.get(self.file_format_cls.SYNONYMS, [])
+            new_row[self.file_format_cls.SYNONYMS] = self.join_lst(synonyms)
+
+            if id is None:
+                new_row[self.file_format_cls.XREFS] = self.join_lst(xrefs)
+                formated_data.append(new_row)
+                logger.debug("No results found for %s, %s" % (raw_id, new_row))
+            elif type(id) == list and len(id) > 1:
+                new_row[self.file_format_cls.XREFS] = self.join_lst(
+                    self.concat(id, xrefs)
+                )
+                new_row["reason"] = "Multiple results found"
+                failed_formatted_data.append(new_row)
+            else:
+                if type(id) == list and len(id) == 1:
+                    id = id[0]
+
+                new_row["raw_id"] = raw_id
+                new_row[self.file_format_cls.ID] = str(id)
+                new_row[self.file_format_cls.RESOURCE] = self.ontology_type.default
+                new_row[self.file_format_cls.LABEL] = self.ontology_type.type
+
+                new_row[self.file_format_cls.XREFS] = self.join_lst(xrefs)
+
+                formated_data.append(new_row)
+
+        total = len(self.conversion_result.failed_ids)
+        logger.info("Start formatting the failed ids, which contains %s rows." % total)
+        for index, failed_id in enumerate(self.conversion_result.failed_ids):
+            logger.info("Processing %s/%s" % (index + 1, total))
+            id = failed_id.id
+            prefix, value = id.split(":")
+            record = self.get_raw_record(id)
+            columns = self._expected_columns + self._optional_columns
+            new_row = {key: self.format_record_value(record, key) for key in columns}
+            new_row[self.file_format_cls.ID] = id
+            new_row[self.file_format_cls.LABEL] = self.ontology_type.type
+            new_row[self.file_format_cls.RESOURCE] = prefix
+
+            # Keep the original record if the id match the default prefix.
+            # If we allow the mixture strategy, we will keep the original record even if the id does not match the default prefix. So we don't have the failed data to return.
+            if (
+                prefix == self.ontology_type.default
+                or self.conversion_result.strategy == Strategy.MIXTURE
+            ):
+                formated_data.append(new_row)
+            else:
+                new_row["reason"] = failed_id.reason
+                failed_formatted_data.append(new_row)
+
+        if len(formated_data) > 0:
+            self._formatted_data = pd.DataFrame(formated_data)
+
+        if len(failed_formatted_data) > 0:
+            self._failed_formatted_data = pd.DataFrame(failed_formatted_data)
+
+        return self
+
     def filter(self) -> pd.DataFrame:
         """Filter the invalid data."""
         raise NotImplementedError

@@ -138,7 +138,7 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
             **kwargs,
         )
 
-    def _format_by_metadata(
+    def format_by_metadata(
         self, new_row: Dict[str, Any], metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
         new_row[self.file_format_cls.NAME] = metadata.get("name") or new_row.get("name")
@@ -172,75 +172,7 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
         Returns:
             self: The CompoundOntologyFormatter instance.
         """
-        formated_data = []
-        failed_formatted_data = []
-
-        for converted_id in self.conversion_result.converted_ids:
-            logger.debug("All keys: %s" % converted_id.__dict__)
-            raw_id = converted_id.get("raw_id")
-            id = converted_id.get(self.ontology_type.default)
-            record = self.get_raw_record(raw_id)
-            columns = self._expected_columns + self._optional_columns
-            new_row = {key: self.format_record_value(record, key) for key in columns}
-
-            metadata = converted_id.get_metadata()
-
-            if metadata:
-                new_row = self._format_by_metadata(new_row, metadata)
-
-            # Keep the original record if the id does not match the default prefix.
-            unique_ids = self.get_alias_ids(converted_id)
-            xrefs = self.concat(unique_ids, new_row.get(self.file_format_cls.XREFS, []))
-
-            if id is None or len(id) == 0:
-                new_row[self.file_format_cls.XREFS] = self.join_lst(xrefs)
-                formated_data.append(new_row)
-                logger.debug("No results found for %s, %s" % (raw_id, new_row))
-            elif type(id) == list and len(id) > 1:
-                new_row[self.file_format_cls.XREFS] = self.join_lst(self.concat(id, xrefs))
-                new_row["reason"] = "Multiple results found"
-                failed_formatted_data.append(new_row)
-            else:
-                if type(id) == list and len(id) == 1:
-                    id = id[0]
-
-                new_row["raw_id"] = raw_id
-                new_row[self.file_format_cls.ID] = str(id)
-                new_row[self.file_format_cls.RESOURCE] = self.ontology_type.default
-                new_row[self.file_format_cls.LABEL] = self.ontology_type.type
-
-                new_row[self.file_format_cls.XREFS] = self.join_lst(xrefs)
-
-                formated_data.append(new_row)
-
-        for failed_id in self.conversion_result.failed_ids:
-            id = failed_id.id
-            prefix, value = id.split(":")
-            record = self.get_raw_record(id)
-            columns = self._expected_columns + self._optional_columns
-            new_row = {key: self.format_record_value(record, key) for key in columns}
-            new_row[self.file_format_cls.ID] = id
-            new_row[self.file_format_cls.LABEL] = self.ontology_type.type
-            new_row[self.file_format_cls.RESOURCE] = prefix
-
-            # Keep the original record if the id match the default prefix.
-            # If we allow the mixture strategy, we will keep the original record even if the id does not match the default prefix. So we don't have the failed data to return.
-            if (
-                prefix == self.ontology_type.default
-                or self.conversion_result.strategy == Strategy.MIXTURE
-            ):
-                formated_data.append(new_row)
-            else:
-                new_row["reason"] = failed_id.reason
-                failed_formatted_data.append(new_row)
-
-        if len(formated_data) > 0:
-            self._formatted_data = pd.DataFrame(formated_data)
-
-        if len(failed_formatted_data) > 0:
-            self._failed_formatted_data = pd.DataFrame(failed_formatted_data)
-
-        return self
+        self.default_format()
 
 
 if __name__ == "__main__":

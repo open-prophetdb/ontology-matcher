@@ -92,32 +92,35 @@ def ontology(
         logging.getLogger("requests_cache").setLevel(logging.DEBUG)
         logger.debug("Enable the logging for requests_cache.")
 
-    ontology_formatter_cls: Union[
-        Type[BaseOntologyFormatter], None
-    ] = ONTOLOGY_DICT.get(ontology_type)
-    if ontology_formatter_cls is None:
-        raise ValueError("Ontology type not supported currently.")
-
     conversion_result = None
+    json_file = output_file.replace(".tsv", ".json")
+    if os.path.isfile(json_file) and not reformat:
+        logger.info(
+            "The json file already exists, if you want to reformat, please add --reformat flag or delete the output file and the json file, then rerun the command."
+        )
+        return
+
     if reformat:
-        json_file = output_file.replace(".tsv", ".json")
         if not os.path.isfile(json_file):
-            raise ValueError(
+            logger.error(
                 "Cannot find the json file, please rerun the command without --reformat flag."
             )
+            return
         else:
             saved_data = json.load(open(json_file, "r"), cls=CustomJSONDecoder)
             conversion_result = saved_data.get("conversion_result")
 
-            if conversion_result is None:
-                logger.warning(
-                    "Cannot find the conversion result in the json file, so we will fetch the data again."
-                )
-
-    elif os.path.exists(output_file):
-        raise ValueError(
-            "The output file already exists, if you want to reformat, please add --reformat flag or delete the output file and the json file, then rerun the command."
+    if conversion_result is None:
+        logger.warning(
+            "Cannot find the conversion result in the json file, so we will fetch the data again."
         )
+
+    ontology_formatter_cls: Union[
+        Type[BaseOntologyFormatter], None
+    ] = ONTOLOGY_DICT.get(ontology_type)
+
+    if ontology_formatter_cls is None:
+        raise ValueError("Ontology type not supported currently.")
 
     ontology_formatter = ontology_formatter_cls(
         filepath=input_file,
