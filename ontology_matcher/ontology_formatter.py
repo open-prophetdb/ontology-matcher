@@ -608,8 +608,7 @@ class BaseOntologyFormatter(ABC):
     def format_by_metadata(
         self, new_row: Dict[str, Any], metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Format the row by metadata. If you want to add more columns, you can override this method.
-        """
+        """Format the row by metadata. If you want to add more columns, you can override this method."""
         new_row[self.file_format_cls.NAME] = metadata.get("name") or new_row.get("name")
         new_row[self.file_format_cls.DESCRIPTION] = metadata.get(
             "description"
@@ -657,6 +656,7 @@ class BaseOntologyFormatter(ABC):
             new_row[self.file_format_cls.SYNONYMS] = self.join_lst(synonyms)
 
             if id is None:
+                new_row[self.file_format_cls.ID] = raw_id
                 new_row[self.file_format_cls.XREFS] = self.join_lst(xrefs)
                 formated_data.append(new_row)
                 logger.debug("No results found for %s, %s" % (raw_id, new_row))
@@ -667,8 +667,11 @@ class BaseOntologyFormatter(ABC):
                 new_row["reason"] = "Multiple results found"
                 failed_formatted_data.append(new_row)
             else:
-                if type(id) == list and len(id) == 1:
-                    id = id[0]
+                if type(id) == list:
+                    if len(id) == 1:
+                        id = id[0]
+                    else:
+                        id = raw_id
 
                 new_row["raw_id"] = raw_id
                 new_row[self.file_format_cls.ID] = str(id)
