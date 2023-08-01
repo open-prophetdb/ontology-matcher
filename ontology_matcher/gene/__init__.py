@@ -25,6 +25,7 @@ default_field_dict = {
     "HGNC": "HGNC",
     "MGI": "MGI",
     "SYMBOL": "symbol",
+    "UNIPROT": "uniprot.Swiss-Prot",
 }
 
 # Get the following fields from the mygene API. Just for getting more information.
@@ -34,6 +35,7 @@ additional_fields = [
     "alias",
     "summary",
     "other_names",
+    "uniport.Swiss-Prot",
 ]
 
 GENE_DICT = OntologyType(
@@ -81,6 +83,7 @@ class GeneOntologyConverter(OntologyBaseConverter):
             "HGNC": "https://www.genenames.org",
             "SYMBOL": "https://www.genenames.org",
             "MGI": "http://www.informatics.jax.org",
+            "UNIPROT": "https://www.uniprot.org/uniprot/",
         }
 
     def _format_response(
@@ -219,7 +222,7 @@ class GeneOntologyConverter(OntologyBaseConverter):
             )
             results = request.parse()
 
-            results = pd.DataFrame(results, dtype=str)
+            results = pd.DataFrame(results)
             # We don't like nan, so we need to convert it to None.
             results = results.where(pd.notnull(results), None)
 
@@ -259,7 +262,9 @@ class GeneOntologyConverter(OntologyBaseConverter):
             response = self._fetch_ids(batch_ids)
             self._format_response(response, batch_ids)
 
-            logger.info("Finish %s/%s" % (i + self.batch_size, len(self.ids)))
+            total = len(self.ids)
+            c = i + self.batch_size if i + self.batch_size < total else total
+            logger.info("Finish %s/%s" % (c, len(self.ids)))
             time.sleep(self.sleep_time)
 
         return ConversionResult(
@@ -310,7 +315,7 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
         def format_synonyms(
             alias: List[str] | float | str | None,
             other_names: List[str] | float | str | None,
-        ):
+        ) -> List[str]:
             synonyms = []
             if type(alias) == str:
                 synonyms.append(alias)
@@ -325,6 +330,7 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
                 synonyms.extend(other_names)
 
             synonyms = list(set(synonyms))
+            return synonyms
 
         def format_by_metadata(
             new_row: Dict[str, Any], metadata: Dict[str, Any]
@@ -351,13 +357,18 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
             if metadata:
                 new_row = format_by_metadata(new_row, metadata)
 
+            # Keep the original record if the id does not match the default prefix.
+            unique_ids = self.get_alias_ids(converted_id)
+            xrefs = self.concat(unique_ids, new_row.get(self.file_format_cls.XREFS, []))
+
+            synonyms = new_row.get(self.file_format_cls.SYNONYMS, [])
+            new_row[self.file_format_cls.SYNONYMS] = self.join_lst(synonyms)
+
             if id is None:
-                # Keep the original record if the id does not match the default prefix.
-                unique_ids = self.get_alias_ids(converted_id)
-                new_row[self.file_format_cls.XREFS] = "|".join(unique_ids)
+                new_row[self.file_format_cls.XREFS] = self.join_lst(xrefs)
                 formated_data.append(new_row)
             elif type(id) == list and len(id) > 1:
-                new_row[self.file_format_cls.XREFS] = "|".join(id)
+                new_row[self.file_format_cls.XREFS] = self.join_lst(self.concat(id, xrefs))
                 new_row["reason"] = "Multiple results found"
                 failed_formatted_data.append(new_row)
             else:
@@ -369,8 +380,7 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
                 new_row[self.file_format_cls.RESOURCE] = self.ontology_type.default
                 new_row[self.file_format_cls.LABEL] = self.ontology_type.type
 
-                unique_ids = self.get_alias_ids(converted_id)
-                new_row[self.file_format_cls.XREFS] = "|".join(unique_ids)
+                new_row[self.file_format_cls.XREFS] = self.join_lst(xrefs)
 
                 formated_data.append(new_row)
 
@@ -383,7 +393,6 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
             new_row[self.file_format_cls.ID] = id
             new_row[self.file_format_cls.LABEL] = self.ontology_type.type
             new_row[self.file_format_cls.RESOURCE] = prefix
-            new_row[self.file_format_cls.XREFS] = ""
 
             # Keep the original record if the id match the default prefix.
             if (
@@ -396,10 +405,10 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
                 failed_formatted_data.append(new_row)
 
         if len(formated_data) > 0:
-            self._formatted_data = pd.DataFrame(formated_data, dtype=str)
+            self._formatted_data = pd.DataFrame(formated_data)
 
         if len(failed_formatted_data) > 0:
-            self._failed_formatted_data = pd.DataFrame(failed_formatted_data, dtype=str)
+            self._failed_formatted_data = pd.DataFrame(failed_formatted_data)
 
         return self
 

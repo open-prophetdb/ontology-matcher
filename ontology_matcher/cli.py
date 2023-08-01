@@ -125,8 +125,8 @@ def ontology(
         sleep_time=sleep_time,
         conversion_result=conversion_result,
     )
-    ontology_formatter.format()
     ontology_formatter.save_to_json(output_file)
+    ontology_formatter.format()
     ontology_formatter.write(output_file)
 
 

@@ -1,11 +1,14 @@
 import re
 import json
+import logging
 import pandas as pd
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Dict, Union, Optional, Type, Any
 from enum import Enum
 from pathlib import Path
+
+logger = logging.getLogger("ontology_matcher.ontology_formatter")
 
 
 @dataclass
@@ -455,7 +458,7 @@ class BaseOntologyFormatter(ABC):
 
         all_ids = self._data[self.file_format_cls.ID].tolist()
 
-        print(f"Total number of IDs: {len(all_ids)}")
+        logger.info(f"Total number of IDs: {len(all_ids)}")
         if conversion_result is None:
             self._conversion_result = ontology_converter(
                 ids=all_ids, **kwargs
@@ -492,10 +495,35 @@ class BaseOntologyFormatter(ABC):
         path = Path(self._filepath)
         ext = path.suffix.strip(".")
         delimiter = "," if ext == "csv" else "\t"
-        data = pd.read_csv(path, delimiter=delimiter, dtype=str)
+        data = pd.read_csv(path, delimiter=delimiter)
         # Remove the nan values
         data = data[data[self.file_format_cls.ID].notna()]
+        data.fillna("", inplace=True)
+
         return data
+
+    def join_lst(self, lst: List[str] | str) -> str:
+        if isinstance(lst, str):
+            return lst
+        elif isinstance(lst, list):
+            return "|".join(filter(lambda x: x, lst))
+        else:
+            return ""
+
+    def concat(self, x: str | List[str], y: str | List[str]) -> List[str]:
+        if x:
+            if isinstance(x, str):
+                x = [x]
+        else:
+            x = []
+
+        if y:
+            if isinstance(y, str):
+                y = [y]
+        else:
+            y = []
+
+        return list(set(x + y))
 
     def _check_format(self) -> bool:
         """Check the format of the disease ontology file.
@@ -531,12 +559,12 @@ class BaseOntologyFormatter(ABC):
                 "Cannot find the related record, please check your id. you may need to use the raw id not the converted id."
             )
         elif len(records) > 1:
-            return pd.DataFrame(records[0], dtype=str)
+            return pd.DataFrame(records[0])
         else:
             return records
 
     @staticmethod
-    def format_record_value(record: pd.DataFrame, key: str) -> str:
+    def format_record_value(record: pd.DataFrame, key: str) -> Any:
         """Format the record value.
 
         Args:
@@ -580,7 +608,7 @@ class BaseOntologyFormatter(ABC):
     def filter(self) -> pd.DataFrame:
         """Filter the invalid data."""
         raise NotImplementedError
-    
+
     def save_to_json(self, filepath: Union[str, Path]):
         obj = {
             "conversion_result": self.conversion_result,

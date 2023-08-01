@@ -1,18 +1,342 @@
 id	name	description	label	resource	synonyms	xrefs	semantic_types
-MESH:C538288	10p Deletion Syndrome (Partial)		Disease	CTD			
 MESH:C579849	15q24 Microdeletion		Disease	CTD			
-MESH:C579850	16p11.2 Deletion Syndrome		Disease	CTD			
-MESH:C566487	2-Methylbutyryl-CoA Dehydrogenase Deficiency		Disease	CTD			
+MESH:C537806	18-Hydroxylase deficiency		Disease	CTD			
+MESH:C535307	2-Methylacetoacetyl CoA thiolase deficiency		Disease	CTD			
 OMIM:616271	3-METHYLGLUTACONIC ACIDURIA, TYPE VIIB		Disease	CTD			
-OMIM:616425	46,XY SEX REVERSAL 10		Disease	CTD			
-MESH:C567887	46,XY Sex Reversal 4		Disease	CTD			
-MESH:C537810	6q+ Syndrome, Partial		Disease	CTD			
-MESH:C579873	9q22.3 Microdeletion		Disease	CTD			
+OMIM:278850	46,XX SEX REVERSAL 2		Disease	CTD			
+OMIM:300833	46,XX SEX REVERSAL 3		Disease	CTD			
+MESH:C536769	46, XY female		Disease	CTD			
+MESH:C535330	Aagenaes syndrome		Disease	CTD			
+MESH:C535331	Aarskog Syndrome		Disease	CTD			
 MESH:C535332	Aase Smith syndrome		Disease	CTD			
-MESH:C535552	Abdominal chemodectomas with cutaneous angiolipomas		Disease	CTD			
-MESH:D009008	Abnormalities, Severe Teratoid	Marked developmental anomalies of a fetus or infant.	Disease	CTD			
-MESH:D000037	Abruptio Placentae	Premature separation of the normally implanted PLACENTA from the UTERUS. Signs of varying degree of severity include UTERINE BLEEDING, uterine MUSCLE HYPERTONIA, and FETAL DISTRESS or FETAL DEATH.	Disease	CTD			
-MESH:C535564	Absence of tibia with polydactyly		Disease	CTD			
+OMIM:605552	ABDOMINAL OBESITY-METABOLIC SYNDROME 1		Disease	CTD			
+MESH:D020222	Abducens Nerve Injury	Traumatic injury to the abducens, or sixth, cranial nerve. Injury to this nerve results in lateral rectus muscle weakness or paralysis. The nerve may be damaged by closed or penetrating CRANIOCEREBRAL TRAUMA or by facial trauma involving the orbit.	Disease	CTD			
+MESH:C540309	Abetalipoproteinemia neuropathy		Disease	CTD			
+MESH:C535556	Abidi X-linked mental retardation syndrome		Disease	CTD			
+MESH:C535562	Absence of septum pellucidum		Disease	CTD			
+MESH:C535563	Absence of Tibia		Disease	CTD			
+MESH:C535566	Absent corpus callosum cataract immunodeficiency		Disease	CTD			
+MESH:C535569	Abuse dwarfism syndrome		Disease	CTD			
+MESH:D063485	Acanthocheilonemiasis	A tropical infectious disease found mainly in Africa that is caused by the filarial parasite ACANTHOCHEILONEMA. Symptoms include skin rashes, abdominal, chest, muscle, and joint pains, neurologic disorders, skin lumps, and elevated levels of white blood cells. The parasite is transmitted through the bite of small flies.	Disease	CTD			
 MESH:D000051	Acantholysis	Separation of the prickle cells of the stratum spinosum of the epidermis, resulting in atrophy of the prickle cell layer. It is seen in diseases such as pemphigus vulgaris (see PEMPHIGUS) and DARIER DISEASE.	Disease	CTD			
-MESH:D020642	Acatalasia	A rare autosomal recessive disorder resulting from the absence of CATALASE activity. Though usually asymptomatic, a syndrome of oral ulcerations and gangrene may be present.	Disease	CTD		
-MONDO:0009239	hypogonadotropic hypogonadism 24 without anosmia	Any hypogonadotropic hypogonadism in which the cause of the disease is a mutation in the FSHB gene.	Disease	Mondo	hypogonadotropic hypogonadism caused by mutation in FSHB|isolated follicle-stimulating hormone deficiency|FSHB hypogonadotropic hypogonadism|hypogonadotropic hypogonadism 24 without anosmia|isolated FSH deficiency|isolated follicle-stimulating hormone (FSH) deficiency|isolated follicle stimulating hormone deficiency|HH24|follicle-stimulating hormone deficiency, isolated	MESH:C537070|SCTID:758664007|Orphanet:52901|DOID:0090088|UMLS:C1856716|OMIM:229070|GARD:0010128	
+MESH:D000052	Acanthosis Nigricans	A circumscribed melanosis consisting of a brown-pigmented, velvety verrucosity or fine papillomatosis appearing in the axillae and other body folds. It occurs in association with endocrine disorders, underlying malignancy, administration of certain drugs, or as in inherited disorder.	Disease	CTD			
+MESH:C536000	Acanthosis nigricans muscle cramps acral enlargement		Disease	CTD			
+MESH:D020642	Acatalasia	A rare autosomal recessive disorder resulting from the absence of CATALASE activity. Though usually asymptomatic, a syndrome of oral ulcerations and gangrene may be present.	Disease	CTD			
+MESH:C536016	Achondrogenesis type 1B		Disease	CTD			
+MESH:C536019	Achondrogenesis, type 4		Disease	CTD			
+MESH:D000130	Achondroplasia	An autosomal dominant disorder that is the most frequent form of short-limb dwarfism. Affected individuals exhibit short stature caused by rhizomelic shortening of the limbs, characteristic facies with frontal bossing and mid-face hypoplasia, exaggerated lumbar lordosis, limitation of elbow extension, GENU VARUM, and trident hand. (Online Mendelian Inheritance in Man, http://www.ncbi.nlm.nih.gov/Omim, MIM#100800, April 20, 2001)	Disease	CTD			
+MESH:C536020	Achondroplasia and Swiss type agammaglobulinemia		Disease	CTD			
+MESH:D000140	Acidosis, Lactic	Acidosis caused by accumulation of lactic acid more rapidly than it can be metabolized. It may occur spontaneously or in association with diseases such as DIABETES MELLITUS; LEUKEMIA; or LIVER FAILURE.	Disease	CTD			
+MESH:C564334	Acrocapitofemoral Dysplasia		Disease	CTD			
+MESH:C563187	Acrocephalopolysyndactyly Type II		Disease	CTD			
+MESH:D018250	Acrospiroma	A rare cutaneous tumor of apocrine or eccrine SWEAT GLAND origin. It is most commonly found on the extremities and is usually benign. It appears as a solitary nodule or cyst and may be solid or produce a watery discharge. It is related to POROMA except in acrospiroma it does not involve the epidermis. There is no indication that heredity or external agents cause these tumors.	Disease	CTD			
+MESH:D000182	ACTH Syndrome, Ectopic	Symptom complex due to ACTH production by non-pituitary neoplasms.	Disease	CTD			
+MESH:C579880	Actin-Accumulation Myopathy		Disease	CTD			
+MESH:C566780	Actinic Prurigo		Disease	CTD			
+MESH:D058186	Acute Kidney Injury	Abrupt reduction in kidney function. Acute kidney injury encompasses the entire spectrum of the syndrome including acute kidney failure; ACUTE KIDNEY TUBULAR NECROSIS; and other less severe conditions.	Disease	CTD			
+MESH:C531736	Acute malaria		Disease	CTD			
+MESH:C564356	Acute Tubulointerstitial Nephritis		Disease	CTD			
+MESH:C562417	Adactylia, Unilateral		Disease	CTD			
+MESH:C538224	Adams Nance syndrome		Disease	CTD			
+MESH:C538225	Adams Oliver syndrome		Disease	CTD			
+OMIM:606771	ADIPONECTIN, SERUM LEVEL OF, QUANTITATIVE TRAIT LOCUS 3		Disease	CTD			
+MESH:D000303	Adrenal Cortex Diseases	Pathological processes of the ADRENAL CORTEX.	Disease	CTD			
+MESH:D000307	Adrenal Gland Diseases	Pathological processes of the ADRENAL GLANDS.	Disease	CTD			
+MESH:D000310	Adrenal Gland Neoplasms	Tumors or cancer of the ADRENAL GLANDS.	Disease	CTD			
+MESH:C538236	Adrenal hyperplasia 2		Disease	CTD			
+MESH:D000309	Adrenal Insufficiency	Conditions in which the production of adrenal CORTICOSTEROIDS falls below the requirement of the body. Adrenal insufficiency can be caused by defects in the ADRENAL GLANDS, the PITUITARY GLAND, or the HYPOTHALAMUS.	Disease	CTD			
+MESH:C579887	African Hemochromatosis		Disease	CTD			
+MESH:C567305	Age-Related Hearing Impairment 1		Disease	CTD			
+MESH:C566307	Alacrima, Congenital		Disease	CTD			
+MESH:D000419	Albuminuria	The presence of albumin in the urine, an indicator of KIDNEY DISEASES.	Disease	CTD			
+MESH:D000435	Alcoholic Intoxication	An acute brain syndrome which results from the excessive ingestion of ETHANOL or ALCOHOLIC BEVERAGES.	Disease	CTD			
+MESH:C538669	Alcohol induced encephalopathy		Disease	CTD			
+MESH:D000430	Alcohol Withdrawal Delirium	An acute organic mental disorder induced by cessation or reduction in chronic alcohol consumption. Clinical characteristics include CONFUSION; DELUSIONS; vivid HALLUCINATIONS; TREMOR; agitation; insomnia; and signs of autonomic hyperactivity (e.g., elevated blood pressure and heart rate, dilated pupils, and diaphoresis). This condition may occasionally be fatal. It was formerly called delirium tremens. (From Adams et al., Principles of Neurology, 6th ed, p1175)	Disease	CTD			
+MESH:D059707	Aliivibrio Infections	Infections with bacteria of the genus ALIIVIBRIO.	Disease	CTD			
+MESH:D000474	Alkaptonuria	An inborn error of amino acid metabolism resulting from a defect in the enzyme HOMOGENTISATE 1,2-DIOXYGENASE, an enzyme involved in the breakdown of PHENYLALANINE and TYROSINE. It is characterized by accumulation of HOMOGENTISIC ACID in the urine, OCHRONOSIS in various tissues, and ARTHRITIS.	Disease	CTD			
+MESH:C537049	Aloi Tomasini Isaia syndrome		Disease	CTD			
+MESH:C567317	Alopecia, Androgenetic, 3		Disease	CTD			
+MESH:C537056	Alopecia universalis onychodystrophy vitiligo		Disease	CTD			
+MESH:C566304	alpha-2-Macroglobulin Deficiency		Disease	CTD			
+MESH:C536584	Alpha-mannosidosis type 1		Disease	CTD			
+MESH:C536588	Alsing syndrome		Disease	CTD			
+MESH:D016301	Alveolar Bone Loss	Resorption or wasting of the tooth-supporting bone (ALVEOLAR PROCESS) in the MAXILLA or MANDIBLE.	Disease	CTD			
+MESH:D000542	Alveolitis, Extrinsic Allergic	A common interstitial lung disease caused by hypersensitivity reactions of PULMONARY ALVEOLI after inhalation of and sensitization to environmental antigens of microbial, animal, or chemical sources. The disease is characterized by lymphocytic alveolitis and granulomatous pneumonitis.	Disease	CTD			
+MESH:C565228	Alzheimer Disease 11		Disease	CTD			
+MESH:C565251	Alzheimer Disease 7		Disease	CTD			
+MESH:C564622	Alzheimer Disease 8		Disease	CTD			
+MESH:C565728	Alzheimer Disease, Familial Early-Onset, With Coexisting Amyloid And Prion Pathology		Disease	CTD			
+MESH:C536596	Alzheimer disease type 4		Disease	CTD			
+MESH:C536601	Amaurosis congenita of Leber, type 2		Disease	CTD			
+MESH:C538246	Aminoacylase 1 deficiency		Disease	CTD			
+MESH:C563799	Amish Infantile Epilepsy Syndrome		Disease	CTD			
+MESH:D000652	Amniotic Band Syndrome	A disorder present in the newborn infant in which constriction rings or bands, causing soft tissue depressions, encircle digits, extremities, or limbs and sometimes the neck, thorax, or abdomen. They may be associated with intrauterine amputations.	Disease	CTD			
+MESH:C565965	AMR Syndrome		Disease	CTD			
+MESH:C535800	Amyloidosis, Cerebral, with Spongiform Encephalopathy		Disease	CTD			
+MESH:C565956	Amyotrophic Lateral Sclerosis, Juvenile, with Dementia		Disease	CTD			
+MESH:C565796	Anemia, Congenital Hypoplastic, with Multiple Congenital Anomalies-Mental Retardation Syndrome		Disease	CTD			
+MESH:D029502	Anemia, Hypoplastic, Congenital	An inborn condition characterized by deficiencies of red cell precursors that sometimes also includes LEUKOPENIA and THROMBOCYTOPENIA.	Disease	CTD			
+MESH:D000752	Anemia, Pernicious	A megaloblastic anemia occurring in children but more commonly in later life, characterized by histamine-fast achlorhydria, in which the laboratory and clinical manifestations are based on malabsorption of vitamin B 12 due to a failure of the gastric mucosa to secrete adequate and potent intrinsic factor. (Dorland, 27th ed)	Disease	CTD			
+MESH:C567145	Anemia, Sideroblastic, Pyridoxine-Refractory, Autosomal Recessive		Disease	CTD			
+MESH:C565700	Aneurysm, Intracranial Berry, 4		Disease	CTD			
+MESH:C563239	Aneurysm Of Interventricular Septum		Disease	CTD			
+MESH:D000787	Angina Pectoris	The symptom of paroxysmal pain consequent to MYOCARDIAL ISCHEMIA usually of distinctive character, location and radiation. It is thought to be provoked by a transient stressful situation during which the oxygen requirements of the MYOCARDIUM exceed that supplied by the CORONARY CIRCULATION.	Disease	CTD			
+MESH:D018322	Angiofibroma	A benign neoplasm of fibrous tissue in which there are numerous small and large, frequently dilated, vascular channels. (Stedman, 25th ed)	Disease	CTD			
+MESH:C536367	Angiomatosis, diffuse corticomeningeal, of Divry and Van Bogaert		Disease	CTD			
+MESH:C536368	Angiosarcoma of the breast		Disease	CTD			
+MESH:C536369	Angiostrongyliasis		Disease	CTD			
+OMIM:106190	ANHIDROSIS, ISOLATED, WITH NORMAL SWEAT GLANDS		Disease	CTD			
+MESH:C536372	Aniridia, type 2		Disease	CTD			
+MESH:D016512	Ankle Injuries	Harm or hurt to the ankle or ankle joint usually inflicted by an external source.	Disease	CTD			
+MESH:C562461	Annular Erythema		Disease	CTD			
+MESH:C536378	Anonychia onychodystrophy		Disease	CTD			
+MESH:C537767	Anophthalmia plus syndrome		Disease	CTD			
+MESH:D000856	Anorexia Nervosa	An eating disorder that is characterized by the lack or loss of APPETITE, known as ANOREXIA. Other features include excess fear of becoming OVERWEIGHT; BODY IMAGE disturbance; significant WEIGHT LOSS; refusal to maintain minimal normal weight; and AMENORRHEA. This disorder occurs most frequently in adolescent females. (APA, Thesaurus of Psychological Index Terms, 1994)	Disease	CTD			
+MESH:D000086582	Anosmia	Complete or severe loss of the subjective sense of smell. Loss of smell may be caused by many factors such as a cold, allergy, OLFACTORY NERVE DISEASES, viral RESPIRATORY TRACT INFECTIONS (e.g., COVID-19), aging and various neurological disorders (e.g., ALZHEIMER DISEASE).	Disease	CTD			
+MESH:C000718907	Ansa pancreatica		Disease	CTD			
+MESH:C537776	Anterior spinal artery stroke		Disease	CTD			
+MESH:D000874	Anthracosilicosis	A form of pneumoconiosis caused by inhalation of dust that contains both CARBON and crystalline SILICON DIOXIDE. These foreign matters induce fibrous nodule formation in the lung.	Disease	CTD			
+MESH:C537779	Antithrombin deficiency type 2		Disease	CTD			
+MESH:D054882	Antley-Bixler Syndrome Phenotype	An inherited condition characterized by multiple malformations of CARTILAGE and bone including CRANIOSYNOSTOSIS; midface hypoplasia; radiohumeral SYNOSTOSIS; CHOANAL ATRESIA; femoral bowing; neonatal fractures; and multiple joint CONTRACTURES and, occasionally, urogenital, gastrointestinal or cardiac defects. In utero exposure to FLUCONAZOLE, as well as mutations in at least two separate genes are associated with this condition - POR (encoding P450 (cytochrome) oxidoreductase (NADPH-FERRIHEMOPROTEIN REDUCTASE)) and FGFR2 (encoding FIBROBLAST GROWTH FACTOR RECEPTOR 2).	Disease	CTD			
+OMIM:617349	AORTIC ANEURYSM, FAMILIAL THORACIC 11, SUSCEPTIBILITY TO		Disease	CTD			
+MESH:C537783	Aortic aneurysm, familial thoracic 3		Disease	CTD			
+MESH:D000094666	Aortic Intramural Hematoma	An atypical form of AORTIC DISSECTION in which subintimal dissection of the aortic TUNICA MEDIA without initial laceration of the aortic TUNICA INTIMA. It may begin from a rupture of the VASA VASORUM feeding aortic media.	Disease	CTD			
+MESH:D001019	Aortic Rupture	The tearing or bursting of the wall along any portion of the AORTA, such as thoracic or abdominal. It may result from the rupture of an aneurysm or it may be due to TRAUMA.	Disease	CTD			
+OMIM:109730	AORTIC VALVE DISEASE 1		Disease	CTD			
+MESH:D001024	Aortic Valve Stenosis	A pathological constriction that can occur above (supravalvular stenosis), below (subvalvular stenosis), or at the AORTIC VALVE. It is characterized by restricted outflow from the LEFT VENTRICLE into the AORTA.	Disease	CTD			
+MESH:D001025	Aortitis	Inflammation of the wall of the AORTA.	Disease	CTD			
+MESH:D001044	Aphonia	Complete loss of phonation due to organic disease of the larynx or to nonorganic (i.e., psychogenic) causes.	Disease	CTD			
+MESH:C536840	Aplasia cutis congenita of limbs recessive		Disease	CTD			
+MESH:D001064	Appendicitis	Acute inflammation of the APPENDIX. Acute appendicitis is classified as simple, gangrenous, or perforated.	Disease	CTD			
+MESH:C563331	Aprosencephaly and Cerebellar Dysgenesis		Disease	CTD			
+MESH:C537430	Arima syndrome		Disease	CTD			
+MESH:C566258	Arms, Malformation of		Disease	CTD			
+MESH:D050379	Arteriolosclerosis	Thickening of the walls of small ARTERIES or ARTERIOLES due to cell proliferation or HYALINE deposition.	Disease	CTD			
+MESH:D001170	Arthritis, Infectious	Arthritis caused by BACTERIA; RICKETTSIA; MYCOPLASMA; VIRUSES; FUNGI; or PARASITES.	Disease	CTD			
+OMIM:300158	ARTHROGRYPOSIS, CONGENITAL, LOWER LIMB, X-LINKED		Disease	CTD			
+OMIM:614335	ARTHROGRYPOSIS, DISTAL, TYPE 1B		Disease	CTD			
+MESH:C563791	Arthrogryposis, Distal, Type 4		Disease	CTD			
+OMIM:108145	ARTHROGRYPOSIS, DISTAL, TYPE 5		Disease	CTD			
+OMIM:615553	ARTHROGRYPOSIS, IMPAIRED INTELLECTUAL DEVELOPMENT, AND SEIZURES		Disease	CTD			
+OMIM:617468	ARTHROGRYPOSIS MULTIPLEX CONGENITA 1, NEUROGENIC, WITH MYELIN DEFECT		Disease	CTD			
+MESH:C538401	Arthrogryposis multiplex congenita whistling face		Disease	CTD			
+MESH:D001196	Ascariasis	Infection by nematodes of the genus ASCARIS. Ingestion of infective eggs causes diarrhea and pneumonitis. Its distribution is more prevalent in areas of poor sanitation and where human feces are used for fertilizer.	Disease	CTD			
+MESH:D017191	Ascaridida Infections	Infections with nematodes of the order ASCARIDIDA.	Disease	CTD			
+MESH:D054880	Aspartylglucosaminuria	A recessively inherited, progressive lysosomal storage disease caused by a deficiency of GLYCOSYLASPARAGINASE activity. The lack of this enzyme activity results in the accumulation of N-acetylglucosaminylasparagine (the linkage unit of asparagine-linked glycoproteins) in LYSOSOMES.	Disease	CTD			
+MESH:D053714	Aspermia	A condition characterized by the complete absence of SEMEN. This disorder should be differentiated from AZOOSPERMIA, absence of sperm in the semen.	Disease	CTD			
+OMIM:271400	ASPLENIA, ISOLATED CONGENITAL		Disease	CTD			
+MESH:C565935	Asthma, Nasal Polyps, And Aspirin Intolerance		Disease	CTD			
+OMIM:611064	ASTHMA-RELATED TRAITS, SUSCEPTIBILITY TO, 5		Disease	CTD			
+OMIM:611403	ASTHMA-RELATED TRAITS, SUSCEPTIBILITY TO, 6		Disease	CTD			
+MESH:C565934	Asthma, Short Stature, and Elevated IgA		Disease	CTD			
+MESH:C563086	Ataxia-Microcephaly-Cataract Syndrome		Disease	CTD			
+OMIM:608984	ATAXIA, SENSORY, 1, AUTOSOMAL DOMINANT		Disease	CTD			
+MESH:C538261	Atrial fibrillation, familial 1		Disease	CTD			
+OMIM:615377	ATRIAL FIBRILLATION, FAMILIAL, 13		Disease	CTD			
+OMIM:617280	ATRIAL FIBRILLATION, FAMILIAL, 18		Disease	CTD			
+MESH:C567389	Atrial Fibrillation, Familial, 7		Disease	CTD			
+MESH:C567802	Atrial Fibrillation, Familial, 8		Disease	CTD			
+MESH:C567561	Atrial Septal Defect 5		Disease	CTD			
+MESH:C548009	Atrial Septal Defect Sinus Venosus		Disease	CTD			
+MESH:C563790	Auditory Neuropathy, Autosomal Dominant, 1		Disease	CTD			
+OMIM:616580	AU-KLINE SYNDROME		Disease	CTD			
+MESH:C566615	Autoimmune Lymphoproliferative Syndrome, Type I, Autosomal Recessive		Disease	CTD			
+MESH:C566614	Autoimmune Lymphoproliferative Syndrome, Type IB		Disease	CTD			
+MESH:C565833	Autoimmune Lymphoproliferative Syndrome, Type IIA		Disease	CTD			
+OMIM:614878	AUTOINFLAMMATION, ANTIBODY DEFICIENCY, AND IMMUNE DYSREGULATION		Disease	CTD			
+MESH:C537789	Axenfeld-Rieger anomaly with cardiac defects and sensorineural hearing loss		Disease	CTD			
+OMIM:602482	AXENFELD-RIEGER SYNDROME, TYPE 3		Disease	CTD			
+MESH:C537790	Axial mesodermal dysplasia spectrum		Disease	CTD			
+MESH:C537901	Bamforth syndrome		Disease	CTD			
+MESH:C537904	Bantu siderosis		Disease	CTD			
+MESH:C565919	Bardet-Biedl Syndrome 10		Disease	CTD			
+MESH:C567141	Bardet-Biedl Syndrome 14		Disease	CTD			
+OMIM:615992	BARDET-BIEDL SYNDROME 15		Disease	CTD			
+MESH:C565918	Bardet-Biedl Syndrome 9		Disease	CTD			
+MESH:C000719194	Barophobia		Disease	CTD			
+MESH:D001471	Barrett Esophagus	A condition with damage to the lining of the lower ESOPHAGUS resulting from chronic acid reflux (ESOPHAGITIS, REFLUX). Through the process of metaplasia, the squamous cells are replaced by a columnar epithelium with cells resembling those of the INTESTINE or the salmon-pink mucosa of the STOMACH. Barrett's columnar epithelium is a marker for severe reflux and precursor to ADENOCARCINOMA of the esophagus.	Disease	CTD			
+OMIM:615483	BASAL GANGLIA CALCIFICATION, IDIOPATHIC, 5		Disease	CTD			
+MESH:C566226	Basilar Impression, Primary		Disease	CTD			
+MESH:D001497	Battered Child Syndrome	A clinical condition resulting from repeated physical and psychological injuries inflicted on a child by the parents or caregivers.	Disease	CTD			
+MESH:C565735	Becker Nevus Syndrome		Disease	CTD			
+MESH:D001506	Beckwith-Wiedemann Syndrome	A syndrome of multiple defects characterized primarily by umbilical hernia (HERNIA, UMBILICAL); MACROGLOSSIA; and GIGANTISM; and secondarily by visceromegaly; HYPOGLYCEMIA; and ear abnormalities.	Disease	CTD			
+MESH:C000719195	Belonephobia		Disease	CTD			
+MESH:C570377	Benign Pseudohypertrophic Muscular Dystrophy		Disease	CTD			
+MESH:C565549	Bernard-Soulier Syndrome, Type B		Disease	CTD			
+MESH:C567518	Bestrophinopathy		Disease	CTD			
+MESH:C562803	Beta-Hydroxyisobutyryl CoA Deacylase Deficiency		Disease	CTD			
+MESH:D044905	beta-Mannosidosis	An inborn error of metabolism marked by a defect in the lysosomal isoform of BETA-MANNOSIDASE that results in lysosomal accumulation of mannose-rich intermediate metabolites containing 1,4-beta linkages. The human disease occurs through autosomal recessive inheritance and manifests in the form of a variety of symptoms that depend upon the type of gene mutation.	Disease	CTD			
+MESH:D001630	Bezoars	Concretions of swallowed hair, fruit or vegetable fibers, or similar substances found in the alimentary canal.	Disease	CTD			
+MESH:C535438	Bidirectional tachycardia		Disease	CTD			
+MESH:C535443	Bile acid synthesis defect, congenital, 2		Disease	CTD			
+MESH:C567817	Biliary Cirrhosis, Primary, 2		Disease	CTD			
+MESH:D059266	Bisphosphonate-Associated Osteonecrosis of the Jaw	Necrotic jaws or other maxillofacial skeleton necrosis associated with bisphosphonate use (see BISPHOSPHONATES). Injury, dental procedures, and trauma can trigger the necrotic process.	Disease	CTD			
+MESH:D001734	Bites, Human	Bites inflicted by humans.	Disease	CTD			
+MESH:C537633	Bjornstad syndrome		Disease	CTD			
+MESH:C564009	Bladder Exstrophy and Epispadias Complex		Disease	CTD			
+MESH:C538157	Blau syndrome		Disease	CTD			
+MESH:C536233	Blepharophimosis syndrome type 1		Disease	CTD			
+MESH:D001766	Blindness	The inability to see or the loss or absence of perception of visual stimuli. This condition may be the result of EYE DISEASES; OPTIC NERVE DISEASES; OPTIC CHIASM diseases; or BRAIN DISEASES affecting the VISUAL PATHWAYS or OCCIPITAL LOBE.	Disease	CTD			
+MESH:C566346	Blue Nevi, Familial Multiple		Disease	CTD			
+MESH:C536240	Blue rubber bleb nevus syndrome		Disease	CTD			
+OMIM:612362	BODY MASS INDEX QUANTITATIVE TRAIT LOCUS 12		Disease	CTD			
+MESH:C564392	Bothnia Retinal Dystrophy		Disease	CTD			
+MESH:D001906	Botulism	A disease caused by potent protein NEUROTOXINS produced by CLOSTRIDIUM BOTULINUM which interfere with the presynaptic release of ACETYLCHOLINE at the NEUROMUSCULAR JUNCTION. Clinical features include abdominal pain, vomiting, acute PARALYSIS (including respiratory paralysis), blurred vision, and DIPLOPIA. Botulism may be classified into several subtypes (e.g., food-borne, infant, wound, and others). (From Adams et al., Principles of Neurology, 6th ed, p1208)	Disease	CTD			
+MESH:D001907	Boutonneuse Fever	A febrile disease of the Mediterranean area, the Crimea, Africa, and India, caused by infection with RICKETTSIA CONORII.	Disease	CTD			
+MESH:C565193	Brachydactyly-Syndactyly Syndrome		Disease	CTD			
+MESH:C537091	Brachydactyly type A5 nail dysplasia		Disease	CTD			
+OMIM:113300	BRACHYDACTYLY, TYPE E1		Disease	CTD			
+MESH:C537096	Brachymesomelia renal syndrome		Disease	CTD			
+MESH:C563218	Brachyolmia Type 2		Disease	CTD			
+MESH:C562840	Breast Cancer, Familial		Disease	CTD			
+MESH:D018567	Breast Neoplasms, Male	Any neoplasms of the male breast. These occur infrequently in males in developed countries, the incidence being about 1% of that in females.	Disease	CTD			
+OMIM:604370	BREAST-OVARIAN CANCER, FAMILIAL, SUSCEPTIBILITY TO, 1		Disease	CTD			
+OMIM:614291	BREAST-OVARIAN CANCER, FAMILIAL, SUSCEPTIBILITY TO, 4		Disease	CTD			
+MESH:D001987	Bronchiectasis	Persistent abnormal dilatation of the bronchi.	Disease	CTD			
+MESH:D001988	Bronchiolitis	Inflammation of the BRONCHIOLES.	Disease	CTD			
+MESH:D018437	Brown-Sequard Syndrome	A syndrome associated with injury to the lateral half of the spinal cord. The condition is characterized by the following clinical features (which are found below the level of the lesion): contralateral hemisensory anesthesia to pain and temperature, ipsilateral loss of propioception, and ipsilateral motor paralysis. Tactile sensation is generally spared. (From Adams et al., Principles of Neurology, 6th ed, p162).	Disease	CTD			
+MESH:C537407	Bruck syndrome 2		Disease	CTD			
+MESH:C567732	Brugada Syndrome 8		Disease	CTD			
+MESH:C537408	Brunoni syndrome		Disease	CTD			
+MESH:C537409	Bruton type agammaglobulinemia		Disease	CTD			
+MESH:D010244	Bulbar Palsy, Progressive	A motor neuron disease marked by progressive weakness of the muscles innervated by cranial nerves of the lower brain stem. Clinical manifestations include dysarthria, dysphagia, facial weakness, tongue weakness, and fasciculations of the tongue and facial muscles. The adult form of the disease is marked initially by bulbar weakness which progresses to involve motor neurons throughout the neuroaxis. Eventually this condition may become indistinguishable from AMYOTROPHIC LATERAL SCLEROSIS. Fazio-Londe syndrome is an inherited form of this illness which occurs in children and young adults. (Adams et al., Principles of Neurology, 6th ed, p1091; Brain 1992 Dec;115(Pt 6):1889-1900)	Disease	CTD			
+MESH:D002037	Bundle-Branch Block	A form of heart block in which the electrical stimulation of HEART VENTRICLES is interrupted at either one of the branches of BUNDLE OF HIS thus preventing the simultaneous depolarization of the two ventricles.	Disease	CTD			
+MESH:D002057	Burns, Chemical	Burns caused by contact with or exposure to CAUSTICS or strong ACIDS.	Disease	CTD			
+MESH:C565891	Calcification of Joints and Arteries		Disease	CTD			
+MESH:D017250	Caliciviridae Infections	Virus diseases caused by CALICIVIRIDAE. They include HEPATITIS E; VESICULAR EXANTHEMA OF SWINE; acute respiratory infections in felines, rabbit hemorrhagic disease, and some cases of gastroenteritis in humans.	Disease	CTD			
+MESH:C537968	Camptocormia		Disease	CTD			
+MESH:C538511	Cancer of the oviduct		Disease	CTD			
+MESH:D002179	Candidiasis, Cutaneous	Candidiasis of the skin manifested as eczema-like lesions of the interdigital spaces, perleche, or chronic paronychia. (Dorland, 27th ed)	Disease	CTD			
+OMIM:615527	CANDIDIASIS, FAMILIAL, 8		Disease	CTD			
+MESH:C000726747	CANVAS syndrome		Disease	CTD			
+OMIM:163000	CAPILLARY MALFORMATIONS, CONGENITAL		Disease	CTD			
+MESH:D002205	Caplan Syndrome	A condition characterized by the presence of RHEUMATOID ARTHRITIS associated with a specific form of pneumoconiosis, often in coal miners and asbestos workers.	Disease	CTD			
+MESH:C535351	CAPOS syndrome		Disease	CTD			
+MESH:D002249	Carbon Monoxide Poisoning	Toxic asphyxiation due to the displacement of oxygen from oxyhemoglobin by carbon monoxide.	Disease	CTD			
+MESH:D002252	Carbon Tetrachloride Poisoning	Poisoning that results from ingestion, injection, inhalation, or skin absorption of CARBON TETRACHLORIDE.	Disease	CTD			
+MESH:D002280	Carcinoma, Basal Cell	A malignant skin neoplasm that seldom metastasizes but has potentialities for local invasion and destruction. Clinically it is divided into types: nodular, cicatricial, morphaic, and erythematoid (pagetoid). They develop on hair-bearing skin, most commonly on sun-exposed areas. Approximately 85% are found on the head and neck area and the remaining 15% on the trunk and limbs. (From DeVita Jr et al., Cancer: Principles & Practice of Oncology, 3d ed, p1471)	Disease	CTD			
+MESH:D018277	Carcinoma, Mucoepidermoid	A tumor of both low- and high-grade malignancy. The low-grade grow slowly, appear in any age group, and are readily cured by excision. The high-grade behave aggressively, widely infiltrate the salivary gland and produce lymph node and distant metastases. Mucoepidermoid carcinomas account for about 21% of the malignant tumors of the parotid gland and 10% of the sublingual gland. They are the most common malignant tumor of the parotid. (From DeVita Jr et al., Cancer: Principles & Practice of Oncology, 3d ed, p575; Holland et al., Cancer Medicine, 3d ed, p1240)	Disease	CTD			
+MESH:D018280	Carcinoma, Skin Appendage	A malignant tumor of the skin appendages, which include the hair, nails, sebaceous glands, sweat glands, and the mammary glands. (From Dorland, 27th ed)	Disease	CTD			
+MESH:D002296	Carcinosarcoma	A malignant neoplasm that contains elements of carcinoma and sarcoma so extensively intermixed as to indicate neoplasia of epithelial and mesenchymal tissue. (Stedman, 25th ed)	Disease	CTD			
+MESH:D016534	Cardiac Output, High	A state of elevated cardiac output due to conditions of either increased hemodynamic demand or reduced cardiac oxygen output. These conditions may include ANEMIA; ARTERIOVENOUS FISTULA; THYROTOXICOSIS; PREGNANCY; EXERCISE; FEVER; and HYPOXIA. In time, compensatory changes of the heart can lead to pathological form of high cardiac output and eventual HEART FAILURE.	Disease	CTD			
+MESH:C565752	Cardiomyopathy, Dilated, 1i		Disease	CTD			
+OMIM:615248	CARDIOMYOPATHY, DILATED, 1KK		Disease	CTD			
+MESH:C563690	Cardiomyopathy, Dilated, 1p		Disease	CTD			
+MESH:C563688	Cardiomyopathy, Dilated, 1q		Disease	CTD			
+MESH:C566052	Cardiomyopathy, Dilated, 1t		Disease	CTD			
+MESH:C567419	Cardiomyopathy, Familial Hypertrophic, 11		Disease	CTD			
+OMIM:612124	CARDIOMYOPATHY, FAMILIAL HYPERTROPHIC, 12		Disease	CTD			
+MESH:C567686	Cardiomyopathy, Familial Hypertrophic, 13		Disease	CTD			
+OMIM:613873	CARDIOMYOPATHY, FAMILIAL HYPERTROPHIC, 17		Disease	CTD			
+MESH:C566169	Cardiomyopathy, Familial Hypertrophic, 4		Disease	CTD			
+MESH:C543241	Cardiomyopathy, fatal fetal, due to myocardial calcification		Disease	CTD			
+MESH:C564655	Cardioneuromyopathy with Hyaline Masses and Nemaline Rods		Disease	CTD			
+MESH:C566176	Car Factor Deficiency		Disease	CTD			
+MESH:C535586	Carnevale syndrome		Disease	CTD			
+MESH:C563249	Carnitine Acetyltransferase Deficiency		Disease	CTD			
+MESH:C562812	Carnitine-Acylcarnitine Translocase Deficiency		Disease	CTD			
+MESH:C535590	Carrington syndrome		Disease	CTD			
+MESH:C535917	Cartwright Nelson Fryns syndrome		Disease	CTD			
+MESH:C565298	Cataract, Autosomal Recessive, Early-Onset, Pulverulent		Disease	CTD			
+MESH:C563819	Cataract, Congenital, Cerulean Type, 3		Disease	CTD			
+MESH:C566923	Cataract, Congenital Nuclear, Autosomal Recessive 3		Disease	CTD			
+MESH:C564596	Cataract, Nuclear Progressive		Disease	CTD			
+MESH:C564619	Cataract, Sutural, with Punctate and Cerulean Opacities		Disease	CTD			
+MESH:D055499	Catheter-Related Infections	Infections resulting from the use of catheters. Proper aseptic technique, site of catheter placement, material composition, and virulence of the organism are all factors that can influence possible infection.	Disease	CTD			
+MESH:C564315	Caudal Duplication Anomaly		Disease	CTD			
+MESH:C567355	CD59 Deficiency		Disease	CTD			
+MESH:D000071697	Cellulite	Skin lumpiness or skin surface dimpling often seen on the thighs, buttocks and abdomen. It is due to protrusion of SUBCUTANEOUS FAT into the DERMIS layer of skin.	Disease	CTD			
+MESH:C565870	Cerebellar Ataxia and Hypogonadotropic Hypogonadism		Disease	CTD			
+OMIM:602197	CEREBELLAR DEGENERATION-RELATED AUTOANTIGEN 3		Disease	CTD			
+OMIM:616202	CEREBELLOFACIODENTAL SYNDROME		Disease	CTD			
+MESH:C563564	Cerebelloparenchymal Disorder VI		Disease	CTD			
+OMIM:600142	CEREBRAL ARTERIOPATHY, AUTOSOMAL RECESSIVE, WITH SUBCORTICAL INFARCTS AND LEUKOENCEPHALOPATHY		Disease	CTD			
+MESH:C566394	Cerebral Cavernous Malformations 2		Disease	CTD			
+MESH:C562856	Cerebral Palsy, Ataxic, Autosomal Recessive		Disease	CTD			
+MESH:C567867	Cerebral Palsy, Spastic Quadriplegic, 2		Disease	CTD			
+MESH:C565863	Cerebrocortical Degeneration of Infancy		Disease	CTD			
+MESH:C562434	Cerebrooculofacioskeletal Syndrome 1		Disease	CTD			
+MESH:C565184	Cerebrooculofacioskeletal Syndrome 4		Disease	CTD			
+MESH:C564953	Ceroid Lipofuscinosis, Neuronal, 1		Disease	CTD			
+MESH:C537948	Ceroid lipofuscinosis, neuronal 1, infantile		Disease	CTD			
+MESH:C566572	Cervical Dystonia, Primary		Disease	CTD			
+MESH:C537956	Cervical hypertrichosis neuropathy		Disease	CTD			
+MESH:C566142	Cervical Hypertrichosis with Underlying Kyphoscoliosis		Disease	CTD			
+OMIM:616155	CHARCOT-MARIE-TOOTH DISEASE, AXONAL, TYPE 2S		Disease	CTD			
+MESH:C564333	Charcot-Marie-Tooth Disease, Dominant Intermediate D		Disease	CTD			
+OMIM:614455	CHARCOT-MARIE-TOOTH DISEASE, DOMINANT INTERMEDIATE E		Disease	CTD			
+OMIM:615185	CHARCOT-MARIE-TOOTH DISEASE, DOMINANT INTERMEDIATE F		Disease	CTD			
+MESH:C564179	Charcot-Marie-Tooth Disease, Foot Deformity of		Disease	CTD			
+MESH:C566137	Charcot-Marie-Tooth Disease, Guadalajara Neuronal Type		Disease	CTD			
+MESH:C537989	Charcot-Marie-Tooth disease, Type 2B		Disease	CTD			
+MESH:C539595	Charcot-Marie-Tooth disease, Type 4A, axonal form		Disease	CTD			
+OMIM:615284	CHARCOT-MARIE-TOOTH DISEASE, TYPE 4B3		Disease	CTD			
+MESH:C538079	Charcot-Marie-Tooth disease with ptosis and parkinsonism		Disease	CTD			
+MESH:C565761	Charcot-Marie-Tooth Neuropathy, Type 4B2, with Early-Onset Glaucoma		Disease	CTD			
+MESH:D000075562	Charles Bonnet Syndrome	Repetitive visual hallucinations experienced mostly by elderly with diminished visual acuity or visual field loss, with awareness of the fictional nature of their hallucinations. It is not associated with delusions and other sensory hallucinations.	Disease	CTD			
+MESH:D002609	Chediak-Higashi Syndrome	A form of phagocyte bactericidal dysfunction characterized by unusual oculocutaneous albinism, high incidence of lymphoreticular neoplasms, and recurrent pyogenic infections. In many cell types, abnormal lysosomes are present leading to defective pigment distribution and abnormal neutrophil functions. The disease is transmitted by autosomal recessive inheritance and a similar disorder occurs in the beige mouse, the Aleutian mink, and albino Hereford cattle.	Disease	CTD			
+MESH:D002636	Cherubism	A fibro-osseous hereditary disease of the jaws. The swollen jaws and raised eyes give a cherubic appearance; multiple radiolucencies are evident upon radiographic examination.	Disease	CTD			
+OMIM:614415	CHILBLAIN LUPUS 2		Disease	CTD			
+MESH:D023341	Chills	The sudden sensation of being cold. It may be accompanied by SHIVERING.	Disease	CTD			
+MESH:D061387	Chlamydial Pneumonia	Pneumonia caused by infections with the genus CHLAMYDIA; and CHLAMYDOPHILA, usually with CHLAMYDOPHILA PNEUMONIAE.	Disease	CTD			
+MESH:D041761	Cholecystolithiasis	Presence or formation of GALLSTONES in the GALLBLADDER.	Disease	CTD			
+MESH:D002780	Cholestasis, Intrahepatic	Impairment of bile flow due to injury to the HEPATOCYTES; BILE CANALICULI; or the intrahepatic bile ducts (BILE DUCTS, INTRAHEPATIC).	Disease	CTD			
+MESH:C535935	Cholestasis, progressive familial intrahepatic 3		Disease	CTD			
+MESH:C535938	Chondrocalcinosis 1		Disease	CTD			
+MESH:C535939	Chondrocalcinosis due to Apatite crystal deposition		Disease	CTD			
+MESH:C565855	Chondrodysplasia Calcificans Metaphysealis		Disease	CTD			
+MESH:C566127	Choreoathetosis, Familial Inverted		Disease	CTD			
+MESH:C567729	Choroidal Dystrophy, Central Areolar 3		Disease	CTD			
+MESH:C535358	Choroidal sclerosis		Disease	CTD			
+MESH:D015862	Choroid Diseases	Disorders of the choroid including hereditary choroidal diseases, neoplasms, and other abnormalities of the vascular layer of the uvea.	Disease	CTD			
+MESH:C538296	Chromosome 11q partial deletion		Disease	CTD			
+MESH:C538043	Chromosome 16, uniparental disomy		Disease	CTD			
+MESH:C538304	Chromosome 18 ring		Disease	CTD			
+MESH:C567290	Chromosome 1q21.1 Duplication Syndrome		Disease	CTD			
+MESH:C538083	Chromosome 1, trisomy 1q32 qter		Disease	CTD			
+MESH:C535372	Chromosome 20, trisomy		Disease	CTD			
+MESH:C567289	Chromosome 2p16.1-P15 Deletion Syndrome		Disease	CTD			
+MESH:C536809	Chromosome 3, monosomy 3q21 23		Disease	CTD			
+MESH:C536810	Chromosome 3, monosomy 3q27		Disease	CTD			
+MESH:C536813	Chromosome 3, trisomy 3q		Disease	CTD			
+MESH:C537816	Chromosome 7, monosomy 7q21		Disease	CTD			
+MESH:C537823	Chromosome 8 deletion		Disease	CTD			
+MESH:C537941	Chromosome 8, partial trisomy		Disease	CTD			
+OMIM:614230	CHROMOSOME 8q21.11 DELETION SYNDROME		Disease	CTD			
+MESH:C537942	Chromosome 8, trisomy		Disease	CTD			
+MESH:C538023	Chromosome 9, duplication 9q21		Disease	CTD			
+MESH:C538026	Chromosome 9, partial trisomy 9p		Disease	CTD			
+MESH:C535453	Chromosome 9, trisomy 9q32		Disease	CTD			
+MESH:D002872	Chromosome Deletion	Actual loss of portion of a chromosome.	Disease	CTD			
+MESH:C000633744	chronic atypical neutrophilic dermatosis with lipodystrophy and elevated temperature		Disease	CTD			
+MESH:D000094482	Chronic Inducible Urticaria	Chronic urticaria with identified triggering factor which is either physical, e.g., vibratory urticaria, or non-physical, e.g., aquagenic urticaria.	Disease	CTD			
+MESH:D000089802	Chronic Limb-Threatening Ischemia	A severe form of peripheral artery disease in which a hypoperfusion of the BLOOD through an organ or tissue is caused by occlusion of peripheral arterial vessels. It is associated with the presence of chronic ischemic rest pain, ulceration or GANGRENE.	Disease	CTD			
+MESH:D055113	Chronic Periodontitis	Chronic inflammation and loss of PERIODONTIUM that is associated with the amount of DENTAL PLAQUE or DENTAL CALCULUS present. Chronic periodontitis occurs mostly in adults and was called adult periodontitis, but this disease can appear in young people.	Disease	CTD			
+MESH:D000070627	Chronic Traumatic Encephalopathy	Degenerative brain disease linked to repetitive brain trauma. Progressive symptoms may include MEMORY LOSS; AGGRESSION; or DEPRESSION.	Disease	CTD			
+MESH:C535458	Chudley-Rozdilsky syndrome		Disease	CTD			
+MESH:D015267	Churg-Strauss Syndrome	Widespread necrotizing angiitis with granulomas. Pulmonary involvement is frequent. Asthma or other respiratory infection may precede evidence of vasculitis. Eosinophilia and lung involvement differentiate this disease from POLYARTERITIS NODOSA.	Disease	CTD			
+MESH:C567713	Ciliary Dyskinesia, Primary, 13		Disease	CTD			
+OMIM:615451	CILIARY DYSKINESIA, PRIMARY, 23		Disease	CTD			
+MESH:D016770	Ciliophora Infections	Infections with protozoa of the phylum CILIOPHORA.	Disease	CTD			
+MESH:C565847	Circumvallate Placenta Syndrome		Disease	CTD			
+MESH:C566123	Cirrhosis, Familial		Disease	CTD			
+MESH:C536207	Citrulline transport defect		Disease	CTD			
+OMIM:300831	CK SYNDROME		Disease	CTD			
+MESH:C567763	CLAPO Syndrome		Disease	CTD			
+MESH:C536208	Clark-Baraitser syndrome		Disease	CTD			
+MESH:C536432	Cochleosaccular degeneration of the inner ear and progressive cataracts		Disease	CTD			
+OMIM:614652	COENZYME Q10 DEFICIENCY, PRIMARY, 3		Disease	CTD			
+OMIM:612016	COENZYME Q10 DEFICIENCY, PRIMARY, 4		Disease	CTD			
+MESH:D000067390	Cold Injury	A physical injury caused by exposure of the body to extremely low ambient temperatures that may lead to loss of body parts, or in extreme cases, death. Examples of cold injury are FROSTBITE and CHILBLAINS.	Disease	CTD			
+MESH:C535963	Cole Carpenter syndrome		Disease	CTD			
+MESH:D003095	Collagen Diseases	Historically, a heterogeneous group of acute and chronic diseases, including rheumatoid arthritis, systemic lupus erythematosus, progressive systemic sclerosis, dermatomyositis, etc. This classification was based on the notion that 'collagen' was equivalent to 'connective tissue', but with the present recognition of the different types of collagen and the aggregates derived from them as distinct entities, the term 'collagen diseases' now pertains exclusively to those inherited conditions in which the primary defect is at the gene level and affects collagen biosynthesis, post-translational modification, or extracellular processing directly. (From Cecil Textbook of Medicine, 19th ed, p1494)	Disease	CTD			
+MESH:C563972	Colorectal Cancer, Hereditary Nonpolyposis, Type 3		Disease	CTD			
+MESH:C566039	Colorectal Cancer, Hereditary Nonpolyposis, Type 6		Disease	CTD			
+MESH:C567115	Combined Cellular And Humoral Immune Defects With Granulomas		Disease	CTD			
+OMIM:614924	COMBINED OXIDATIVE PHOSPHORYLATION DEFICIENCY 12		Disease	CTD			
+OMIM:616045	COMBINED OXIDATIVE PHOSPHORYLATION DEFICIENCY 22		Disease	CTD			
+MESH:C565169	Complement Component 3 Deficiency, Autosomal Recessive		Disease	CTD			
+MESH:C566443	Complement Component 7 Deficiency		Disease	CTD			
+OMIM:615561	COMPLEMENT FACTOR B DEFICIENCY		Disease	CTD			
+MESH:C565027	Complement Factor D Deficiency		Disease	CTD			
+MESH:C562875	Complement Factor H Deficiency		Disease	CTD		

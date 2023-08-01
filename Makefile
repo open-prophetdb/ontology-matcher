@@ -1,4 +1,4 @@
-.PHONY: clean clean-build clean-pyc clean-test coverage dist docs help install lint lint/flake8
+.PHONY: clean clean-build clean-pyc clean-test coverage dist docs help install lint lint/flake8 examples
 .DEFAULT_GOAL := help
 
 define BROWSER_PYSCRIPT
@@ -85,3 +85,11 @@ dist: clean ## builds source and wheel package
 
 install: clean ## install the package to the active Python's site-packages
 	python setup.py install
+
+examples:
+	rm -rf examples/results
+	mkdir -p examples/results
+	onto-match ontology -i examples/gene.tsv -o examples/results/gene_formatted.tsv -O gene
+	onto-match ontology -i examples/disease.tsv -o examples/results/disease_formatted.tsv -O disease
+	onto-match ontology -i examples/compound.tsv -o examples/results/compound_formatted.tsv -O compound
+	onto-match ontology -i examples/metabolite.tsv -o examples/results/metabolite_formatted.tsv -O metabolite

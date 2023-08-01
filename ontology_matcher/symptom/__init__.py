@@ -256,13 +256,18 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
             columns = self._expected_columns + self._optional_columns
             new_row = {key: self.format_record_value(record, key) for key in columns}
 
+            # Keep the original record if the id does not match the default prefix.
+            unique_ids = self.get_alias_ids(converted_id)
+            xrefs = self.concat(unique_ids, new_row.get(self.file_format_cls.XREFS, []))
+
+            synonyms = new_row.get(self.file_format_cls.SYNONYMS, [])
+            new_row[self.file_format_cls.SYNONYMS] = self.join_lst(synonyms)
+
             if id is None:
-                # Keep the original record if the id does not match the default prefix.
-                unique_ids = self.get_alias_ids(converted_id)
-                new_row[self.file_format_cls.XREFS] = "|".join(unique_ids)
+                new_row[self.file_format_cls.XREFS] = self.join_lst(xrefs)
                 formated_data.append(new_row)
             elif type(id) == list and len(id) > 1:
-                new_row[self.file_format_cls.XREFS] = "|".join(id)
+                new_row[self.file_format_cls.XREFS] = self.join_lst(self.concat(id, xrefs))
                 new_row["reason"] = "Multiple results found"
                 failed_formatted_data.append(new_row)
             else:
@@ -273,8 +278,7 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
                 new_row[self.file_format_cls.RESOURCE] = self.ontology_type.default
                 new_row[self.file_format_cls.LABEL] = self.ontology_type.type
 
-                unique_ids = self.get_alias_ids(converted_id)
-                new_row[self.file_format_cls.XREFS] = "|".join(unique_ids)
+                new_row[self.file_format_cls.XREFS] = self.join_lst(xrefs)
 
                 formated_data.append(new_row)
 
@@ -287,7 +291,6 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
             new_row[self.file_format_cls.ID] = id
             new_row[self.file_format_cls.LABEL] = self.ontology_type.type
             new_row[self.file_format_cls.RESOURCE] = prefix
-            new_row[self.file_format_cls.XREFS] = ""
 
             # Keep the original record if the id match the default prefix.
             if (
@@ -300,10 +303,10 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
                 failed_formatted_data.append(new_row)
 
         if len(formated_data) > 0:
-            self._formatted_data = pd.DataFrame(formated_data, dtype=str)
+            self._formatted_data = pd.DataFrame(formated_data)
 
         if len(failed_formatted_data) > 0:
-            self._failed_formatted_data = pd.DataFrame(failed_formatted_data, dtype=str)
+            self._failed_formatted_data = pd.DataFrame(failed_formatted_data)
 
         return self
 

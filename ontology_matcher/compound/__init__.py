@@ -60,6 +60,7 @@ class CompoundOntologyConverter(OntologyBaseConverter):
             "MESH": "https://meshb.nlm.nih.gov/search",
             "UMLS": "https://www.nlm.nih.gov/research/umls/",
             "CHEMBL": "https://www.ebi.ac.uk/chembl/",
+            "HMDB": "https://hmdb.ca/"
         }
 
     def convert(self) -> ConversionResult:
@@ -73,7 +74,7 @@ class CompoundOntologyConverter(OntologyBaseConverter):
         for i in range(0, len(self._ids), self._batch_size):
             batch_ids = self._ids[i : i + self._batch_size]
 
-            logger.info("Processing %s to %s" % (i, i + self._batch_size))
+            logger.info("Processing %s to %s" % (i + self._batch_size, i + self._batch_size))
 
             grouped_ids = make_grouped_ids(batch_ids)
 
@@ -148,15 +149,15 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
         synonyms = metadata.get("synonyms") or new_row.get("synonyms")
 
         if synonyms and type(synonyms) == list:
-            synonyms = map(lambda x: str(x), synonyms)
-            new_row[self.file_format_cls.SYNONYMS] = "|".join(synonyms)
+            synonyms = list(map(lambda x: str(x), synonyms))
+            new_row[self.file_format_cls.SYNONYMS] = self.join_lst(synonyms)
         else:
             new_row[self.file_format_cls.SYNONYMS] = synonyms
 
         pmids = metadata.get("pmids") or new_row.get("pmids")
 
         if pmids and type(pmids) == list:
-            new_row[self.file_format_cls.PMIDS] = "|".join(pmids)
+            new_row[self.file_format_cls.PMIDS] = self.join_lst(pmids)
         else:
             new_row[self.file_format_cls.PMIDS] = pmids
 
@@ -187,14 +188,16 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
             if metadata:
                 new_row = self._format_by_metadata(new_row, metadata)
 
+            # Keep the original record if the id does not match the default prefix.
+            unique_ids = self.get_alias_ids(converted_id)
+            xrefs = self.concat(unique_ids, new_row.get(self.file_format_cls.XREFS, []))
+
             if id is None or len(id) == 0:
-                # Keep the original record if the id does not match the default prefix.
-                unique_ids = self.get_alias_ids(converted_id)
-                new_row[self.file_format_cls.XREFS] = "|".join(unique_ids)
+                new_row[self.file_format_cls.XREFS] = self.join_lst(xrefs)
                 formated_data.append(new_row)
                 logger.debug("No results found for %s, %s" % (raw_id, new_row))
             elif type(id) == list and len(id) > 1:
-                new_row[self.file_format_cls.XREFS] = "|".join(id)
+                new_row[self.file_format_cls.XREFS] = self.join_lst(self.concat(id, xrefs))
                 new_row["reason"] = "Multiple results found"
                 failed_formatted_data.append(new_row)
             else:
@@ -206,8 +209,7 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
                 new_row[self.file_format_cls.RESOURCE] = self.ontology_type.default
                 new_row[self.file_format_cls.LABEL] = self.ontology_type.type
 
-                unique_ids = self.get_alias_ids(converted_id)
-                new_row[self.file_format_cls.XREFS] = "|".join(unique_ids)
+                new_row[self.file_format_cls.XREFS] = self.join_lst(xrefs)
 
                 formated_data.append(new_row)
 
@@ -233,10 +235,10 @@ class CompoundOntologyFormatter(BaseOntologyFormatter):
                 failed_formatted_data.append(new_row)
 
         if len(formated_data) > 0:
-            self._formatted_data = pd.DataFrame(formated_data, dtype=str)
+            self._formatted_data = pd.DataFrame(formated_data)
 
         if len(failed_formatted_data) > 0:
-            self._failed_formatted_data = pd.DataFrame(failed_formatted_data, dtype=str)
+            self._failed_formatted_data = pd.DataFrame(failed_formatted_data)
 
         return self
 
