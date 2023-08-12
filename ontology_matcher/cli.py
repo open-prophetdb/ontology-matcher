@@ -58,9 +58,6 @@ def ontology(
     disable_cache=False,
 ):
     """Ontology matcher"""
-    if debug:
-        logger.info("Enable the debug mode.")
-
     verboselogs.install()
     # Use the logger name instead of the module name
     coloredlogs.install(
@@ -95,7 +92,7 @@ def ontology(
     conversion_result = None
     json_file = output_file.replace(".tsv", ".json")
     if os.path.isfile(json_file) and not reformat:
-        logger.info(
+        logger.warning(
             "The json file already exists, if you want to reformat, please add --reformat flag or delete the output file and the json file, then rerun the command."
         )
         return

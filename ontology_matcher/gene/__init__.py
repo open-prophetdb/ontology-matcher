@@ -327,12 +327,18 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
     def format_by_metadata(
         self, new_row: Dict[str, Any], metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
-        new_row[self.file_format_cls.NAME] = metadata.get("name")
+        symbol = metadata.get("Symbol")
+        # If the symbol is not available, use the raw name instead.
+        if symbol:
+            new_row[self.file_format_cls.NAME] = symbol
+
         new_row[self.file_format_cls.TAXID] = metadata.get("taxid")
         new_row[self.file_format_cls.DESCRIPTION] = metadata.get("summary")
         alias = metadata.get("alias")
         other_names = metadata.get("other_names")
-        synonyms = self.format_synonyms(alias, other_names)
+        synonyms = self.format_synonyms(alias, other_names).append(
+            metadata.get("name", "")
+        )
 
         new_row[self.file_format_cls.SYNONYMS] = synonyms
         return new_row
