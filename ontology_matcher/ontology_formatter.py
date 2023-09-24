@@ -652,7 +652,7 @@ class BaseOntologyFormatter(ABC):
             unique_ids = self.get_alias_ids(converted_id)
             xrefs = self.concat(unique_ids, new_row.get(self.file_format_cls.XREFS, []))
 
-            synonyms = new_row.get(self.file_format_cls.SYNONYMS, [])
+            synonyms = new_row.get(self.file_format_cls.SYNONYMS, record.get("synonyms"))
             new_row[self.file_format_cls.SYNONYMS] = self.join_lst(synonyms)
 
             if id is None:
