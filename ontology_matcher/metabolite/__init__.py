@@ -62,6 +62,10 @@ class MetaboliteOntologyConverter(OntologyBaseConverter):
             "UMLS": "https://www.nlm.nih.gov/research/umls/",
             "CHEMBL": "https://www.ebi.ac.uk/chembl/",
         }
+    
+    def check_batch_size(self):
+        """Check the batch size."""
+        self.default_check_batch_size()
 
     def convert(self) -> ConversionResult:
         """Convert the ids to different databases.

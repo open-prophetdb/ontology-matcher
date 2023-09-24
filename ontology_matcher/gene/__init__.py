@@ -86,6 +86,11 @@ class GeneOntologyConverter(OntologyBaseConverter):
             "UNIPROT": "https://www.uniprot.org/uniprot/",
         }
 
+    def check_batch_size(self):
+        """Check the batch size."""
+        if self.batch_size > 1000:
+            raise ValueError("The batch size cannot be larger than 1000.")
+
     def _format_response(
         self, search_results: pd.DataFrame, batch_ids: List[str]
     ) -> None:

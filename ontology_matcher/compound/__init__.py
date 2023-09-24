@@ -62,6 +62,10 @@ class CompoundOntologyConverter(OntologyBaseConverter):
             "CHEMBL": "https://www.ebi.ac.uk/chembl/",
             "HMDB": "https://hmdb.ca/"
         }
+    
+    def check_batch_size(self):
+        """Check the batch size."""
+        self.default_check_batch_size()
 
     def convert(self) -> ConversionResult:
         """Convert the ids to different databases.

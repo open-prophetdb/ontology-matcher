@@ -64,6 +64,10 @@ class SymptomOntologyConverter(OntologyBaseConverter):
             "HP": "https://hpo.jax.org/app/",
         }
 
+    def check_batch_size(self):
+        """Check the batch size."""
+        self.default_check_batch_size()
+
     @retry(stop=stop_after_attempt(5), wait=wait_random(min=1, max=15))
     def _fetch_format_data(self, ids: List[str]) -> None:
         """Fetch and format the ids.

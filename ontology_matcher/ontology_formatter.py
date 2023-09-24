@@ -256,11 +256,21 @@ class OntologyBaseConverter:
         self._sleep_time = sleep_time
 
         self.print_ontology_links()
+        self.check_batch_size()
+        self._check_ids()
 
+    def default_check_batch_size(self):
+        """Check the batch size.
+
+        Raises:
+            Exception: If the batch size is larger than 500.
+        """
         if self._batch_size > 500:
             raise Exception("The batch size cannot be larger than 500.")
-
-        self._check_ids()
+        
+    def check_batch_size(self):
+        """Check the batch size."""
+        raise NotImplementedError
 
     @property
     def ontology_links(self) -> Dict[str, str]:
@@ -665,6 +675,9 @@ class BaseOntologyFormatter(ABC):
 
             synonyms = new_row.get(self.file_format_cls.SYNONYMS, record.get("synonyms"))
             new_row[self.file_format_cls.SYNONYMS] = self.join_lst(synonyms)
+
+            pmids = new_row.get(self.file_format_cls.PMIDS, record.get("pmids"))
+            new_row[self.file_format_cls.PMIDS] = self.join_lst(pmids)
 
             if id is None:
                 new_row[self.file_format_cls.ID] = raw_id

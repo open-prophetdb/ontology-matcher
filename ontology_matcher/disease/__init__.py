@@ -69,6 +69,10 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
             "ORDO": "https://www.orpha.net/consor/cgi-bin/index.php",
             "UMLS": "https://www.nlm.nih.gov/research/umls/",
         }
+    
+    def check_batch_size(self):
+        """Check the batch size."""
+        self.default_check_batch_size()
 
     def _format_response(self, response: dict, batch_ids: List[str]) -> None:
         """Format the response from the OXO API.
