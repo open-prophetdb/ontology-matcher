@@ -141,29 +141,8 @@ class MetaboliteOntologyFormatter(BaseOntologyFormatter):
     def format_by_metadata(
         self, new_row: Dict[str, Any], metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
-        new_row[self.file_format_cls.NAME] = metadata.get("name") or new_row.get("name")
-        new_row[self.file_format_cls.DESCRIPTION] = metadata.get(
-            "description"
-        ) or new_row.get("description")
+        new_row = self.default_format_by_metadata(new_row, metadata)
 
-        synonyms = metadata.get("synonyms") or new_row.get("synonyms")
-
-        if synonyms and type(synonyms) == list:
-            synonyms = list(map(lambda x: str(x), synonyms))
-            new_row[self.file_format_cls.SYNONYMS] = self.join_lst(synonyms)
-        else:
-            new_row[self.file_format_cls.SYNONYMS] = synonyms
-
-        pmids = metadata.get("pmids") or new_row.get("pmids")
-
-        if pmids and type(pmids) == list:
-            new_row[self.file_format_cls.PMIDS] = self.join_lst(pmids)
-        else:
-            new_row[self.file_format_cls.PMIDS] = pmids
-
-        new_row[self.file_format_cls.XREFS] = metadata.get("xrefs") or new_row.get(
-            "xrefs"
-        )
         return new_row
 
     def format(self):

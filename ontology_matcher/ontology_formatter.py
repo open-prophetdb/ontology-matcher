@@ -200,7 +200,7 @@ def make_grouped_ids(ids: List[str]) -> GroupedIds:
     return GroupedIds(id_dict, id_idx_dict)
 
 
-def flatten_dedup(nested_list: List[List[str] | str] | List[str]) -> List[str]:
+def flatten_dedup(nested_list: List[List[str]] | List[List[str] | str] | List[str]) -> List[str]:
     flat_list = []
     for sublist in nested_list:
         if isinstance(sublist, list):
@@ -504,8 +504,11 @@ class BaseOntologyFormatter(ABC):
 
     def join_lst(self, lst: List[str] | str) -> str:
         if isinstance(lst, str):
-            return lst
+            lst = list(set(lst.split("|")))
+            return "|".join(filter(lambda x: x, lst))
         elif isinstance(lst, list):
+            new_lst = [x.split("|") for x in lst if x]
+            lst = flatten_dedup(new_lst)
             return "|".join(filter(lambda x: x, lst))
         else:
             return ""
@@ -604,8 +607,13 @@ class BaseOntologyFormatter(ABC):
             self: The OntologyFormatter instance.
         """
         raise NotImplementedError
-
+    
     def format_by_metadata(
+        self, new_row: Dict[str, Any], metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        raise NotImplementedError
+
+    def default_format_by_metadata(
         self, new_row: Dict[str, Any], metadata: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Format the row by metadata. If you want to add more columns, you can override this method."""
@@ -618,6 +626,9 @@ class BaseOntologyFormatter(ABC):
         )
         new_row[self.file_format_cls.XREFS] = self.concat(
             metadata.get("xrefs", []), new_row.get("xrefs", [])
+        )
+        new_row[self.file_format_cls.PMIDS] = self.concat(
+            metadata.get("pmids", []), new_row.get("pmids", [])
         )
         return new_row
 
@@ -685,7 +696,7 @@ class BaseOntologyFormatter(ABC):
         total = len(self.conversion_result.failed_ids)
         logger.info("Start formatting the failed ids, which contains %s rows." % total)
         for index, failed_id in enumerate(self.conversion_result.failed_ids):
-            logger.info("Processing %s/%s" % (index + 1, total))
+            logger.info("[Failed ID] Processing %s/%s" % (index + 1, total))
             id = failed_id.id
             prefix, value = id.split(":")
             record = self.get_raw_record(id)
