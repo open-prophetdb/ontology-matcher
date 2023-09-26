@@ -534,7 +534,7 @@ class BaseOntologyFormatter(ABC):
         path = Path(self._filepath)
         ext = path.suffix.strip(".")
         delimiter = "," if ext == "csv" else "\t"
-        data = pd.read_csv(path, delimiter=delimiter)
+        data = pd.read_csv(path, delimiter=delimiter, dtype=str)
         # Remove the nan values
         data = data[data[self.file_format_cls.ID].notna()]
         data.fillna("", inplace=True)
@@ -546,7 +546,7 @@ class BaseOntologyFormatter(ABC):
             lst = list(set(lst.split("|")))
             return "|".join(filter(lambda x: x, lst))
         elif isinstance(lst, list):
-            new_lst = [x.split("|") for x in lst if x]
+            new_lst = [str(x).split("|") for x in lst if x]
             lst = flatten_dedup(new_lst)
             return "|".join(filter(lambda x: x, lst))
         else:
@@ -602,7 +602,7 @@ class BaseOntologyFormatter(ABC):
                 "Cannot find the related record, please check your id. you may need to use the raw id not the converted id."
             )
         elif len(records) > 1:
-            return pd.DataFrame(records[0])
+            return pd.DataFrame(records[0], dtype=str)
         else:
             return records
 
@@ -761,10 +761,10 @@ class BaseOntologyFormatter(ABC):
                 failed_formatted_data.append(new_row)
 
         if len(formated_data) > 0:
-            self._formatted_data = pd.DataFrame(formated_data)
+            self._formatted_data = pd.DataFrame(formated_data, dtype=str)
 
         if len(failed_formatted_data) > 0:
-            self._failed_formatted_data = pd.DataFrame(failed_formatted_data)
+            self._failed_formatted_data = pd.DataFrame(failed_formatted_data, dtype=str)
 
         return self
 

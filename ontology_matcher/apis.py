@@ -297,7 +297,7 @@ class MyGene:
                 'name': 'cyclin dependent kinase 2',
                 'query': '1017',
                 'symbol': 'CDK2',
-                'taxid': 9606
+                'taxid': '9606'
             },
             {
                 'query': '1018',
@@ -307,7 +307,7 @@ class MyGene:
                 'name': 'cyclin dependent kinase 3',
                 'query': '1018',
                 'symbol': 'CDK3',
-                'taxid': 9606
+                'taxid': '9606'
             }
         ]
         """
