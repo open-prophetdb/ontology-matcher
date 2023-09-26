@@ -192,7 +192,7 @@ class GeneOntologyConverter(OntologyBaseConverter):
                     converted_id_dict[choice] = None
 
             if converted_id_dict:
-                self.add_converted_id(converted_id_dict)
+                self.add_converted_id_dict(converted_id_dict)
 
     def _fetch_ids(self, ids) -> pd.DataFrame:
         """Fetch the ids from the mygene API.

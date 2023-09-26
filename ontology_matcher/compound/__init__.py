@@ -104,7 +104,7 @@ class CompoundOntologyConverter(OntologyBaseConverter):
                             )
                         else:
                             logger.debug("result: %s", result)
-                            self.add_converted_id(result)
+                            self.add_converted_id_dict(result)
 
         return ConversionResult(
             ids=self._ids,

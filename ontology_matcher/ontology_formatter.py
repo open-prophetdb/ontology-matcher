@@ -338,6 +338,11 @@ class OntologyBaseConverter:
         """Add a failed id into the list of failed ids."""
         self._failed_ids.append(failed_id)
 
+    def add_failed_ids(self, failed_ids: List[FailedId]):
+        """Add a list of failed ids."""
+        for failed_id in failed_ids:
+            self.add_failed_id(failed_id)
+
     def print_ontology_links(self):
         """Print the ontology links."""
         # Check the ontology links
@@ -353,9 +358,33 @@ class OntologyBaseConverter:
 
         print("\n")
 
-    def add_converted_id(self, converted_id: Dict[str, Any]):
+    def add_converted_id_dict(self, converted_id_dict: Dict[str, Any]):
         """Add a converted id into the list of converted ids."""
-        self._converted_ids.append(ConvertedId.from_args(**converted_id))
+        self._converted_ids.append(ConvertedId.from_args(**converted_id_dict))
+
+    def add_converted_ids(self, converted_ids: List[ConvertedId]):
+        self._converted_ids.extend(converted_ids)
+
+    def add_converted_id_dicts(self, converted_id_dicts: List[Dict[str, Any]]):
+        """Add a list of converted ids."""
+        for converted_id_dict in converted_id_dicts:
+            self.add_converted_id_dict(converted_id_dict)
+
+    def id_dicts2converted_ids(self, id_dicts: List[Dict[str, List[str]]]) -> List[ConvertedId]:
+        """Convert the id dicts to converted ids.
+
+        Args:
+            id_dicts (List[Dict[str, List[str]]]): The id dicts.
+
+        Returns:
+            List[ConvertedId]: The converted ids.
+        """
+        converted_ids = []
+        for id_dict in id_dicts:
+            converted_id = ConvertedId.from_args(**id_dict)
+            converted_ids.append(converted_id)
+
+        return converted_ids
 
     def convert(self) -> ConversionResult:
         """Convert the ids.

@@ -16,6 +16,7 @@ from ontology_matcher.ontology_formatter import (
     OntologyBaseConverter,
     BaseOntologyFormatter,
     NoResultException,
+    ConvertedId,
 )
 from ontology_matcher.disease.custom_types import DiseaseOntologyFileFormat
 
@@ -74,7 +75,9 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
         """Check the batch size."""
         self.default_check_batch_size()
 
-    def _format_response(self, response: dict, batch_ids: List[str]) -> None:
+    def _format_response(
+        self, response: dict, batch_ids: List[str]
+    ) -> tuple[List[Dict[str, Any]], List[FailedId]]:
         """Format the response from the OXO API.
 
         Args:
@@ -88,6 +91,8 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
             None
         """
         search_results = response.get("_embedded", {}).get("searchResults", [])
+        converted_id_dicts: List[Dict[str, Any]] = []
+        failed_ids: List[FailedId] = []
 
         if len(search_results) == 0:
             logger.debug("No results found, we will try to fetch the data again.")
@@ -101,14 +106,14 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
                     id=id,
                     reason="Invalid prefix, only support %s" % self.databases,
                 )
-                self._failed_ids.append(failed_id)
+                failed_ids.append(failed_id)
                 continue
 
             result = search_results[index] if len(search_results) > 0 else {}
             mapping_response_list = result.get("mappingResponseList", [])
             if len(mapping_response_list) == 0:
                 failed_id = FailedId(idx=index, id=id, reason="No results found")
-                self._failed_ids.append(failed_id)
+                failed_ids.append(failed_id)
                 continue
             else:
                 converted_id_dict = {}
@@ -138,7 +143,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
                             failed_id = FailedId(
                                 idx=index, id=id, reason="Multiple results found"
                             )
-                            self._failed_ids.append(failed_id)
+                            failed_ids.append(failed_id)
                             # Abandon the converted_id_dict, otherwise the converted_ids will be added to the converted_ids list.
                             converted_id_dict = {}
                             break
@@ -149,7 +154,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
                                 id=id,
                                 reason="The strategy is unique, but multiple results found",
                             )
-                            self._failed_ids.append(failed_id)
+                            failed_ids.append(failed_id)
                             # Abandon the converted_id_dict, otherwise the converted_ids will be added to the converted_ids list.
                             converted_id_dict = {}
                             break
@@ -157,7 +162,11 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
                         converted_id_dict[choice] = None
 
                 if converted_id_dict:
-                    self.add_converted_id(converted_id_dict)
+                    converted_id_dicts.append(converted_id_dict)
+
+        logger.debug("The converted_id_dicts: %s" % converted_id_dicts)
+        logger.debug("The failed_ids: %s" % failed_ids)
+        return converted_id_dicts, failed_ids
 
     def _fetch_ids(self, ids) -> dict:
         """Fetch the ids from the OXO API.
@@ -190,7 +199,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
         return results.json()
 
     @retry(stop=stop_after_attempt(15), wait=wait_random(min=1, max=15))
-    def _fetch_format_data(self, ids: List[str]) -> None:
+    def _fetch_format_data(self, ids: List[str]) -> tuple[List[Dict[str, Any]], List[FailedId]]:
         """Fetch and format the ids.
 
         Args:
@@ -200,7 +209,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
             None
         """
         response = self._fetch_ids(ids)
-        self._format_response(response, ids)
+        return self._format_response(response, ids)
 
     def convert(self) -> ConversionResult:
         """Convert the ids to different databases.
@@ -210,13 +219,17 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
         """
         # Cannot use the parallel processing, otherwise the index order will not be correct.
         for i in range(0, len(self._ids), self._batch_size):
+            logger.info("Start to convert the disease ids: %s-%s/%s" % (i, i + self._batch_size, len(self._ids)))
             batch_ids = self._ids[i : i + self._batch_size]
-            self._fetch_format_data(batch_ids)
-            self._converted_ids = MyDisease.update_metadata(
-                self._converted_ids, self.default_database
+            converted_id_dicts, failed_ids = self._fetch_format_data(batch_ids)
+            self.add_failed_ids(failed_ids)
+            converted_ids = self.id_dicts2converted_ids(converted_id_dicts)
+            updated_converted_ids = MyDisease.update_metadata(
+                converted_ids, self.default_database
             )
+            self.add_converted_ids(updated_converted_ids)
 
-            logger.info("Finish %s/%s" % (i + self._batch_size, len(self._ids)))
+            logger.info("Finish convert %s-%s/%s\n\n" % (i, i + self._batch_size, len(self._ids)))
             time.sleep(self._sleep_time)
 
         return ConversionResult(
@@ -280,7 +293,7 @@ if __name__ == "__main__":
         "ORDO:94063",
         "UMLS:C0007131",
         "ICD-9:349.89",
-        "MESH:D000069290"
+        "MESH:D000069290",
     ]
     disease = DiseaseOntologyConverter(ids)
     result = disease.convert()

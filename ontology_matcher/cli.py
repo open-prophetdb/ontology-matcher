@@ -70,17 +70,19 @@ def ontology(
     verboselogs.install()
 
     if log_file is not None:
-        max_log_size = 1024 * 1024 * 500  # 1 MB
-        backup_count = 10  # Number of backup log files to keep
+        max_log_size = 1024 * 1024 * 100  # 1 MB
+        backup_count = 50  # Number of backup log files to keep
         fh = RotatingFileHandler(log_file, maxBytes=max_log_size, backupCount=backup_count)
 
-        fh.setLevel(logging.DEBUG if debug else logging.INFO)
+        # How to set the logging level to DEBUG globally for all imported modules?
+        level = logging.DEBUG if debug else logging.INFO
+        fh.setLevel(level)
         fh.setFormatter(
             logging.Formatter(
                 "%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s"
             )
         )
-        logger.addHandler(fh)
+        logging.basicConfig(level=level, handlers=[fh])
     else:
         # Use the logger name instead of the module name
         coloredlogs.install(
