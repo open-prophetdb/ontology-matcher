@@ -4,6 +4,7 @@ import click
 import logging
 import coloredlogs
 import verboselogs
+from logging.handlers import RotatingFileHandler
 import requests_cache
 from typing import Type, Union
 from ontology_matcher import (
@@ -35,6 +36,13 @@ cli = click.Group()
     help="Ontology type",
     type=click.Choice(ONTOLOGY_DICT_KEYS),
 )
+@click.option(
+    "--log-file",
+    "-l",
+    help="Path to log file",
+    default=None,
+    type=click.Path(file_okay=True, dir_okay=False),
+)
 @click.option("--batch-size", "-b", help="Batch size, default is 300.", default=300)
 @click.option("--sleep-time", "-s", help="Sleep time, default is 3.", default=3)
 @click.option("--debug", "-d", help="Debug mode", is_flag=True, default=False)
@@ -53,17 +61,32 @@ def ontology(
     ontology_type,
     batch_size,
     sleep_time,
+    log_file,
     debug=False,
     reformat=False,
     disable_cache=False,
 ):
     """Ontology matcher"""
     verboselogs.install()
-    # Use the logger name instead of the module name
-    coloredlogs.install(
-        level=logging.DEBUG if debug else logging.INFO,
-        fmt="%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s",
-    )
+
+    if log_file is not None:
+        max_log_size = 1024 * 1024 * 500  # 1 MB
+        backup_count = 10  # Number of backup log files to keep
+        fh = RotatingFileHandler(log_file, maxBytes=max_log_size, backupCount=backup_count)
+
+        fh.setLevel(logging.DEBUG if debug else logging.INFO)
+        fh.setFormatter(
+            logging.Formatter(
+                "%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s"
+            )
+        )
+        logger.addHandler(fh)
+    else:
+        # Use the logger name instead of the module name
+        coloredlogs.install(
+            level=logging.DEBUG if debug else logging.INFO,
+            fmt="%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s",
+        )
 
     if not disable_cache:
         logger.info("Enable the cache, you can use --disable-cache to disable it.")

@@ -69,7 +69,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
             "ORDO": "https://www.orpha.net/consor/cgi-bin/index.php",
             "UMLS": "https://www.nlm.nih.gov/research/umls/",
         }
-    
+
     def check_batch_size(self):
         """Check the batch size."""
         self.default_check_batch_size()
@@ -255,6 +255,13 @@ class DiseaseOntologyFormatter(BaseOntologyFormatter):
             **kwargs,
         )
 
+    def format_by_metadata(
+        self, new_row: Dict[str, Any], metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        new_row = self.default_format_by_metadata(new_row, metadata)
+
+        return new_row
+
     def format(self):
         """Format the disease ontology file.
 
@@ -273,6 +280,7 @@ if __name__ == "__main__":
         "ORDO:94063",
         "UMLS:C0007131",
         "ICD-9:349.89",
+        "MESH:D000069290"
     ]
     disease = DiseaseOntologyConverter(ids)
     result = disease.convert()

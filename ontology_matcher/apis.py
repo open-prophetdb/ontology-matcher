@@ -956,7 +956,7 @@ class MyDisease:
             if get_id(x.get(database))
         }
         ids = list(selected_id_pair.values())
-        # logger.debug("Ids: %s" % ids)
+        logger.debug("Ids: %s" % ids)
         grouped_ids = make_grouped_ids(ids)
         id_dict = grouped_ids.id_dict
 
@@ -964,7 +964,7 @@ class MyDisease:
         groups = id_dict.keys()
         valid_keys = set(groups).intersection(set(cls.SUPPORTED_SCOPES.keys()))
 
-        # logger.debug("Valid keys: %s" % valid_keys)
+        logger.debug("Valid keys: %s" % valid_keys)
 
         for group in valid_keys:
             ids = [f"{group}:{x}" for x in id_dict.get(group, [])]
@@ -975,14 +975,14 @@ class MyDisease:
             for index, result in enumerate(results):
                 matched = converted_ids[index]
 
-                # logger.debug(
-                #     "Matched ConvertedId: %s, %s, %s"
-                #     % (
-                #         matched,
-                #         list(map(lambda x: x.get(database), converted_ids)),
-                #         result.id,
-                #     ),
-                # )
+                logger.debug(
+                    "Matched ConvertedId: %s, %s, %s"
+                    % (
+                        matched,
+                        list(map(lambda x: x.get(database), converted_ids)),
+                        result.id,
+                    ),
+                )
 
                 matched.update_metadata(result.__dict__)
 

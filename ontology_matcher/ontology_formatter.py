@@ -567,6 +567,7 @@ class BaseOntologyFormatter(ABC):
             pd.DataFrame: The raw record.
         """
         records = self._data[self._data[self.file_format_cls.ID] == id]
+        logger.debug("Get the raw record: %s" % records)
         if len(records) == 0:
             raise ValueError(
                 "Cannot find the related record, please check your id. you may need to use the raw id not the converted id."
