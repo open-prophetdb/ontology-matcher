@@ -335,7 +335,7 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
         """Format the row by the metadata."""
         new_row = self.default_format_by_metadata(new_row, metadata)
 
-        symbol = metadata.get("Symbol")
+        symbol = metadata.get("SYMBOL")
         # If the symbol is not available, use the raw name instead.
         if symbol:
             new_row[self.file_format_cls.NAME] = symbol
@@ -346,9 +346,8 @@ class GeneOntologyFormatter(BaseOntologyFormatter):
 
         alias = metadata.get("alias")
         other_names = metadata.get("other_names")
-        synonyms = self.format_synonyms(alias, other_names).append(
-            metadata.get("name", "")
-        )
+        synonyms = self.format_synonyms(alias, other_names)
+        synonyms.append(metadata.get("name", ""))
         synonyms = self.concat(new_row.get("synonyms", []), synonyms or [])
 
         new_row[self.file_format_cls.SYNONYMS] = synonyms
