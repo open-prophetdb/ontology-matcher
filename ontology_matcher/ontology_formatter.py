@@ -729,7 +729,10 @@ class BaseOntologyFormatter(ABC):
 
                 new_row["raw_id"] = raw_id
                 new_row[self.file_format_cls.ID] = str(id)
-                new_row[self.file_format_cls.RESOURCE] = self.ontology_type.default
+                # new_row[self.file_format_cls.RESOURCE] = self.ontology_type.default
+                # We don't need to change the resource, just keep it same as the prefix of the id.
+                prefix, value = str(id).split(":")
+                new_row[self.file_format_cls.RESOURCE] = prefix
                 new_row[self.file_format_cls.LABEL] = self.ontology_type.type
 
                 new_row[self.file_format_cls.XREFS] = self.join_lst(xrefs)

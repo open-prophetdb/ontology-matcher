@@ -4,6 +4,7 @@ import click
 import logging
 import coloredlogs
 import verboselogs
+import pandas as pd
 from logging.handlers import RotatingFileHandler
 import requests_cache
 from typing import Type, Union
@@ -19,6 +20,33 @@ from ontology_matcher.ontology_formatter import CustomJSONDecoder
 logger = logging.getLogger("ontology_matcher.cli")
 
 cli = click.Group()
+
+
+def init_log(log_file, debug):
+    verboselogs.install()
+
+    if log_file is not None:
+        max_log_size = 1024 * 1024 * 100  # 1 MB
+        backup_count = 50  # Number of backup log files to keep
+        fh = RotatingFileHandler(
+            log_file, maxBytes=max_log_size, backupCount=backup_count
+        )
+
+        # How to set the logging level to DEBUG globally for all imported modules?
+        level = logging.DEBUG if debug else logging.INFO
+        fh.setLevel(level)
+        fh.setFormatter(
+            logging.Formatter(
+                "%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s"
+            )
+        )
+        logging.basicConfig(level=level, handlers=[fh])
+    else:
+        # Use the logger name instead of the module name
+        coloredlogs.install(
+            level=logging.DEBUG if debug else logging.INFO,
+            fmt="%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s",
+        )
 
 
 @cli.command(help="Convert ontology ids.")
@@ -67,28 +95,7 @@ def ontology(
     disable_cache=False,
 ):
     """Ontology matcher"""
-    verboselogs.install()
-
-    if log_file is not None:
-        max_log_size = 1024 * 1024 * 100  # 1 MB
-        backup_count = 50  # Number of backup log files to keep
-        fh = RotatingFileHandler(log_file, maxBytes=max_log_size, backupCount=backup_count)
-
-        # How to set the logging level to DEBUG globally for all imported modules?
-        level = logging.DEBUG if debug else logging.INFO
-        fh.setLevel(level)
-        fh.setFormatter(
-            logging.Formatter(
-                "%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s"
-            )
-        )
-        logging.basicConfig(level=level, handlers=[fh])
-    else:
-        # Use the logger name instead of the module name
-        coloredlogs.install(
-            level=logging.DEBUG if debug else logging.INFO,
-            fmt="%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s",
-        )
+    init_log(log_file, debug)
 
     if not disable_cache:
         logger.info("Enable the cache, you can use --disable-cache to disable it.")
@@ -137,9 +144,9 @@ def ontology(
             "Cannot find the conversion result in the json file, so we will fetch the data again."
         )
 
-    ontology_formatter_cls: Union[
-        Type[BaseOntologyFormatter], None
-    ] = ONTOLOGY_DICT.get(ontology_type)
+    ontology_formatter_cls: Union[Type[BaseOntologyFormatter], None] = (
+        ONTOLOGY_DICT.get(ontology_type)
+    )
 
     if ontology_formatter_cls is None:
         raise ValueError("Ontology type not supported currently.")
@@ -153,6 +160,91 @@ def ontology(
     ontology_formatter.save_to_json(output_file)
     ontology_formatter.format()
     ontology_formatter.write(output_file)
+
+
+@cli.command(help="Find the duplicated ids and merge them into one.")
+@click.option(
+    "--input-file",
+    "-i",
+    help="Path to input file, which is the output file of the ontology command.",
+    required=True,
+    type=click.Path(file_okay=True, dir_okay=False),
+)
+@click.option(
+    "--log-file",
+    "-l",
+    help="Path to log file",
+    default=None,
+    type=click.Path(file_okay=True, dir_okay=False),
+)
+@click.option("--output-file", "-o", help="Path to output file", required=True)
+def dedup(input_file, output_file, log_file):
+    """Deduplicate the ontology ids and merge them into one."""
+    init_log(log_file, False)
+
+    entities = pd.read_csv(input_file, sep="\t", dtype=str)
+    logger.info(
+        f"Read the input file {input_file}, the shape of the dataframe is {entities.shape}."
+    )
+
+    for col in ["id", "label", "xrefs"]:
+        if col not in entities.columns:
+            raise ValueError(f"Cannot find the column {col} in the input file.")
+
+    final_df = pd.DataFrame()
+    labels = entities["label"].unique()
+    for label in labels:
+        sub_entities = entities[entities["label"] == label]
+        ontology_type = ONTOLOGY_TYPE_DICT.get(label.lower())
+        if ontology_type is None:
+            # We don't have the ontology type, so we will just keep all the entities.
+            final_df = pd.concat([final_df, sub_entities])
+            continue
+
+        default_id_type = ontology_type.default
+
+        if sub_entities.shape[0] == 1:
+            continue
+        else:
+            unofficial_ids = list(
+                filter(
+                    lambda x: not x.lower().startswith(default_id_type.lower()),
+                    sub_entities["id"].to_list(),
+                )
+            )
+            logger.info(
+                f"{label}: There are {len(list(unofficial_ids))} unofficial ids in the input file."
+            )
+            unofficial_df = sub_entities[sub_entities["id"].isin(unofficial_ids)].copy()
+            official_df = sub_entities[~sub_entities["id"].isin(unofficial_ids)].copy()
+            final_df = pd.concat([final_df, official_df])
+
+            remaining_df = pd.DataFrame()
+            # Keep related rows if the id is in the xrefs column of the official_df, otherwise, we will keep the raw row in the unofficial_df.
+            for idx, row in unofficial_df.iterrows():
+                id = row["id"]
+                matched_row = official_df[
+                    official_df["xrefs"].str.contains(id, na=False)
+                ]
+                if matched_row.shape[0] > 0:
+                    # Add the matched_row to the remaining_df
+                    logger.info(
+                        f"{label}: The id {id} is found in the xrefs column of the remaining_df, so we will use the matched_row to replace the original row."
+                    )
+                    remaining_df = pd.concat([remaining_df, matched_row])
+                else:
+                    logger.warning(
+                        f"{label}: The id {id} is not found in the xrefs column of the remaining_df, so we will keep the original row."
+                    )
+                    remaining_df = pd.concat([remaining_df, row.to_frame().T])
+
+            final_df = pd.concat([final_df, remaining_df])
+
+    final_df = final_df.drop_duplicates(subset=["id", "label"])
+    logger.info(
+        f"Write the final_df to {output_file}, the shape of the dataframe is {final_df.shape}."
+    )
+    final_df.to_csv(output_file, sep="\t", index=False)
 
 
 @cli.command(help="Which ID types are supported.")
@@ -187,3 +279,7 @@ def template(output_file, ontology_type):
         raise ValueError("Ontology type not supported currently.")
 
     ot.generate_template(output_file)
+
+
+if __name__ == "__main__":
+    cli()
