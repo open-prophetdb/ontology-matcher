@@ -217,30 +217,86 @@ def dedup(input_file, output_file, log_file):
             )
             unofficial_df = sub_entities[sub_entities["id"].isin(unofficial_ids)].copy()
             official_df = sub_entities[~sub_entities["id"].isin(unofficial_ids)].copy()
-            final_df = pd.concat([final_df, official_df])
+            final_df = pd.concat([final_df, official_df.copy()])
 
             remaining_df = pd.DataFrame()
+            def exists(x, lst):
+                if not x or not lst:
+                    return False
+
+                lst = lst if isinstance(lst, list) else []
+
+                return x.lower() in [y.lower() for y in lst if isinstance(y, str)]
+
+            def merge_ids(matched_row, row):
+                row_ids = row["xrefs"].split("|") if isinstance(row["xrefs"], str) else []
+                matched_row_ids = matched_row["xrefs"].values[0].split("|") if isinstance(matched_row["xrefs"].values[0], str) else []
+                
+                ids = [str(row["id"])] + row_ids + matched_row_ids
+                ids = list(set(ids))
+                
+                return "|".join(ids)
+
             # Keep related rows if the id is in the xrefs column of the official_df, otherwise, we will keep the raw row in the unofficial_df.
             for idx, row in unofficial_df.iterrows():
                 id = row["id"]
-                matched_row = official_df[
-                    official_df["xrefs"].str.contains(id, na=False)
+                name = row["name"]
+                matched_row_by_xrefs = official_df[
+                    official_df["xrefs"].str.split("|").apply(lambda x: exists(id, x if isinstance(x, list) else []))
                 ]
-                if matched_row.shape[0] > 0:
+
+                matched_row_by_synonyms = official_df[
+                    official_df["synonyms"].str.split("|").apply(lambda x: exists(name, x if isinstance(x, list) else []))
+                ]
+
+                matched_row_by_name = official_df[
+                    official_df["name"].str.split("|").apply(lambda x: exists(name, x if isinstance(x, list) else []))
+                ]
+
+                if matched_row_by_xrefs.shape[0] > 0:
                     # Add the matched_row to the remaining_df
                     logger.info(
-                        f"{label}: The id {id} is found in the xrefs column of the remaining_df, so we will use the matched_row to replace the original row."
+                        f"{label}: The id {id} is found in the xrefs column, so we will use the matched_row to replace the original row."
                     )
-                    remaining_df = pd.concat([remaining_df, matched_row])
+
+                    if matched_row_by_xrefs.shape[0] == 1:
+                        logger.info(
+                            "The matched_row_by_xrefs has only one row, so we add the ids to the xrefs column of the matched_row."
+                        )
+                        ids = merge_ids(matched_row_by_xrefs, row)
+                        official_df.loc[matched_row_by_xrefs.index, "xrefs"] = ids
+                elif matched_row_by_name.shape[0] > 0:
+                    logger.info(
+                        f"{label}: The name {name} is found in the name column, so we will use the matched_row to replace the original row."
+                    )
+
+                    if matched_row_by_name.shape[0] == 1:
+                        logger.info(
+                            "The matched_row_by_name has only one row, so we add the ids to the xrefs column of the matched_row."
+                        )
+                        ids = merge_ids(matched_row_by_name, row)
+                        official_df.loc[matched_row_by_name.index, "xrefs"] = ids
+                elif matched_row_by_synonyms.shape[0] > 0:
+                    logger.info(
+                        f"{label}: The name {name} is found in the synonyms column, so we will use the matched_row to replace the original row."
+                    )
+
+                    if matched_row_by_synonyms.shape[0] == 1:
+                        logger.info(
+                            "The matched_row_by_synonyms has only one row, so we add the ids to the xrefs column of the matched_row."
+                        )
+                        ids = merge_ids(matched_row_by_synonyms, row)
+                        official_df.loc[matched_row_by_synonyms.index, "xrefs"] = ids
                 else:
                     logger.warning(
-                        f"{label}: The id {id} is not found in the xrefs column of the remaining_df, so we will keep the original row."
+                        f"{label}: The id {id} is not found in the xrefs/name/synonyms columns, so we will keep the original row."
                     )
                     remaining_df = pd.concat([remaining_df, row.to_frame().T])
 
-            final_df = pd.concat([final_df, remaining_df])
+            final_df = pd.concat([final_df, remaining_df, official_df])
 
-    final_df = final_df.drop_duplicates(subset=["id", "label"])
+    # How to keep the last row if there are duplicated rows?
+    final_df = final_df.drop_duplicates(subset=["id", "label"], keep="last")
     logger.info(
         f"Write the final_df to {output_file}, the shape of the dataframe is {final_df.shape}."
     )
