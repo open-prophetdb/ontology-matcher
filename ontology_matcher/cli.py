@@ -1,7 +1,9 @@
 import os
+import re
 import json
 import click
 import logging
+from tqdm import tqdm
 import coloredlogs
 import verboselogs
 import pandas as pd
@@ -191,9 +193,19 @@ def dedup(input_file, output_file, log_file):
         if col not in entities.columns:
             raise ValueError(f"Cannot find the column {col} in the input file.")
 
+    def merge_ids(matched_row: pd.DataFrame, row: pd.Series):
+        row_ids = row["xrefs"].split("|") if isinstance(row["xrefs"], str) else []
+        matched_row_ids = (
+            matched_row["xrefs"].values[0].split("|")
+            if isinstance(matched_row["xrefs"].values[0], str)
+            else []
+        )
+        ids = [str(row["id"])] + row_ids + matched_row_ids
+        return "|".join(list(set(ids)))
+
     final_df = pd.DataFrame()
-    labels = entities["label"].unique()
-    for label in labels:
+    for label in entities["label"].unique():
+        logger.info(f"Processing the label {label}.")
         sub_entities = entities[entities["label"] == label]
         ontology_type = ONTOLOGY_TYPE_DICT.get(label.lower())
         if ontology_type is None:
@@ -203,104 +215,80 @@ def dedup(input_file, output_file, log_file):
 
         default_id_type = ontology_type.default
 
-        if sub_entities.shape[0] == 1:
-            continue
-        else:
-            unofficial_ids = list(
-                filter(
-                    lambda x: not x.lower().startswith(default_id_type.lower()),
-                    sub_entities["id"].to_list(),
-                )
-            )
-            logger.info(
-                f"{label}: There are {len(list(unofficial_ids))} unofficial ids in the input file."
-            )
-            unofficial_df = sub_entities[sub_entities["id"].isin(unofficial_ids)].copy()
-            official_df = sub_entities[~sub_entities["id"].isin(unofficial_ids)].copy()
-            final_df = pd.concat([final_df, official_df.copy()])
+        official_ids = sub_entities["id"].str.startswith(default_id_type)
+        unofficial_df: pd.DataFrame = sub_entities[~official_ids].copy()
+        official_df = sub_entities[official_ids].copy()
 
-            remaining_df = pd.DataFrame()
-            def exists(x, lst):
-                if not x or not lst:
-                    return False
+        def process_row(row: pd.Series, official_df: pd.DataFrame):
+            id, name = str(row["id"]), str(row["name"])
+            conditions = {"xrefs": id, "synonyms": name, "name": name}
 
-                lst = lst if isinstance(lst, list) else []
-
-                return x.lower() in [y.lower() for y in lst if isinstance(y, str)]
-
-            def merge_ids(matched_row, row):
-                row_ids = row["xrefs"].split("|") if isinstance(row["xrefs"], str) else []
-                matched_row_ids = matched_row["xrefs"].values[0].split("|") if isinstance(matched_row["xrefs"].values[0], str) else []
-                
-                ids = [str(row["id"])] + row_ids + matched_row_ids
-                ids = list(set(ids))
-                
-                return "|".join(ids)
-
-            # Keep related rows if the id is in the xrefs column of the official_df, otherwise, we will keep the raw row in the unofficial_df.
-            for idx, row in unofficial_df.iterrows():
-                id = row["id"]
-                name = row["name"]
-                matched_row_by_xrefs = official_df[
-                    official_df["xrefs"].str.split("|").apply(lambda x: exists(id, x if isinstance(x, list) else []))
+            for key, value in conditions.items():
+                value = re.escape(value)
+                matched_rows = official_df[
+                    official_df[key].str.contains(value, case=False, na=False)
                 ]
+                if not matched_rows.empty:
+                    if matched_rows.shape[0] == 1:
+                        logger.info(f"Matched one row for {key} {value}.")
+                        ids = merge_ids(matched_rows, row)
+                        matched_rows = matched_rows.assign(xrefs=ids)
+                        return matched_rows.to_dict("records")[0]
+                    return None
 
-                matched_row_by_synonyms = official_df[
-                    official_df["synonyms"].str.split("|").apply(lambda x: exists(name, x if isinstance(x, list) else []))
-                ]
+            logger.info(f"Cannot find the matched row for {id} {name}.")
+            return row.to_dict()
 
-                matched_row_by_name = official_df[
-                    official_df["name"].str.split("|").apply(lambda x: exists(name, x if isinstance(x, list) else []))
-                ]
+        processed_rows = [
+            process_row(unofficial_df.iloc[idx], official_df)
+            for idx in tqdm(range(unofficial_df.shape[0]), desc="Processing Rows", total=unofficial_df.shape[0])
+        ]
+        logger.info("The len of the processed_rows is %s.", len(processed_rows))
+        rows_dicts = [
+            row for row in processed_rows if row is not None
+        ]
+        remaining_df = pd.DataFrame(rows_dicts)
+        logger.info("The shape of the remaining_df is %s.", remaining_df.shape)
 
-                if matched_row_by_xrefs.shape[0] > 0:
-                    # Add the matched_row to the remaining_df
-                    logger.info(
-                        f"{label}: The id {id} is found in the xrefs column, so we will use the matched_row to replace the original row."
-                    )
+        logger.info("The shape of the final_df is %s.", final_df.shape)
+        final_df = pd.concat([final_df, official_df, remaining_df])
+        logger.info("The shape of the final_df is %s.", final_df.shape)
 
-                    if matched_row_by_xrefs.shape[0] == 1:
-                        logger.info(
-                            "The matched_row_by_xrefs has only one row, so we add the ids to the xrefs column of the matched_row."
-                        )
-                        ids = merge_ids(matched_row_by_xrefs, row)
-                        official_df.loc[matched_row_by_xrefs.index, "xrefs"] = ids
-                elif matched_row_by_name.shape[0] > 0:
-                    logger.info(
-                        f"{label}: The name {name} is found in the name column, so we will use the matched_row to replace the original row."
-                    )
+    def merge_unique(items):
+        unique_items = set()
+        for item in items:
+            if isinstance(item, str):
+                unique_items.update(item.split("|"))
+        return "|".join(unique_items)
 
-                    if matched_row_by_name.shape[0] == 1:
-                        logger.info(
-                            "The matched_row_by_name has only one row, so we add the ids to the xrefs column of the matched_row."
-                        )
-                        ids = merge_ids(matched_row_by_name, row)
-                        official_df.loc[matched_row_by_name.index, "xrefs"] = ids
-                elif matched_row_by_synonyms.shape[0] > 0:
-                    logger.info(
-                        f"{label}: The name {name} is found in the synonyms column, so we will use the matched_row to replace the original row."
-                    )
+    final_df_output_file = output_file.replace(".tsv", "_full.tsv")
+    final_df.to_csv(final_df_output_file, sep="\t", index=False)
 
-                    if matched_row_by_synonyms.shape[0] == 1:
-                        logger.info(
-                            "The matched_row_by_synonyms has only one row, so we add the ids to the xrefs column of the matched_row."
-                        )
-                        ids = merge_ids(matched_row_by_synonyms, row)
-                        official_df.loc[matched_row_by_synonyms.index, "xrefs"] = ids
-                else:
-                    logger.warning(
-                        f"{label}: The id {id} is not found in the xrefs/name/synonyms columns, so we will keep the original row."
-                    )
-                    remaining_df = pd.concat([remaining_df, row.to_frame().T])
+    remaining_df_output_file = output_file.replace(".tsv", "_remaining.tsv")
+    remaining_df.to_csv(remaining_df_output_file, sep="\t", index=False)
 
-            final_df = pd.concat([final_df, remaining_df, official_df])
-
-    # How to keep the last row if there are duplicated rows?
-    final_df = final_df.drop_duplicates(subset=["id", "label"], keep="last")
-    logger.info(
-        f"Write the final_df to {output_file}, the shape of the dataframe is {final_df.shape}."
+    logger.info("The shape of the final_df is %s.", final_df.shape)
+    aggregated_df = (
+        final_df.groupby(["id", "label"])
+        .agg(
+            {
+                "name": "first",
+                "description": "first",
+                "resource": "first",
+                "taxid": "first",
+                "xrefs": merge_unique,
+                "synonyms": merge_unique,
+                "pmids": merge_unique,
+                "raw_id": merge_unique,
+            }
+        )
+        .reset_index()
     )
-    final_df.to_csv(output_file, sep="\t", index=False)
+
+    logger.info(
+        f"Write the aggregated_df to {output_file}, the shape of the dataframe is {aggregated_df.shape}."
+    )
+    aggregated_df.to_csv(output_file, sep="\t", index=False)
 
 
 @cli.command(help="Which ID types are supported.")
