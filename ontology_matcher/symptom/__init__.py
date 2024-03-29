@@ -1,3 +1,5 @@
+# NOTE: It's not ready for use. The OxO and OLS4 API cannot provide the metadata for the symptom ontology. So we need to find another way to fetch the metadata.
+
 import re
 import time
 import logging
@@ -15,6 +17,7 @@ from ontology_matcher.ontology_formatter import (
     BaseOntologyFormatter,
     NoResultException,
 )
+from ontology_matcher.apis import OLS4Query
 from ontology_matcher.symptom.custom_types import SymptomOntologyFileFormat
 
 # SYMP: Symptom Ontology ID, https://raw.githubusercontent.com/SymptomOntology/SymptomOntology/v2022-11-30/src/ontology/symp.owl; https://bioportal.bioontology.org/ontologies/SYMP
@@ -25,7 +28,7 @@ from ontology_matcher.symptom.custom_types import SymptomOntologyFileFormat
 logger = logging.getLogger("ontology_matcher.symptom")
 
 SYMPTOM_DICT = OntologyType(
-    type="Symptom", default="MESH", choices=["SYMP", "MESH", "UMLS", "HP"]
+    type="Symptom", default="UMLS", choices=["SYMP", "MESH", "UMLS", "HP"]
 )
 
 
@@ -68,20 +71,7 @@ class SymptomOntologyConverter(OntologyBaseConverter):
         """Check the batch size."""
         self.default_check_batch_size()
 
-    @retry(stop=stop_after_attempt(5), wait=wait_random(min=1, max=15))
-    def _fetch_format_data(self, ids: List[str]) -> None:
-        """Fetch and format the ids.
-
-        Args:
-            ids (List[str]): A list of ids.
-
-        Returns:
-            None
-        """
-        response = self._fetch_ids(ids)
-        self._format_response(response, ids)
-
-    def _format_response(self, response: dict, batch_ids: List[str]) -> None:
+    def _format_response(self, response: dict, batch_ids: List[str]) -> tuple[List[Dict[str, Any]], List[FailedId]]:
         """Format the response from the OXO API.
 
         Args:
@@ -95,7 +85,11 @@ class SymptomOntologyConverter(OntologyBaseConverter):
             None
         """
         search_results = response.get("_embedded", {}).get("searchResults", [])
+        converted_id_dicts: List[Dict[str, Any]] = []
+        failed_ids: List[FailedId] = []
+
         if len(search_results) == 0:
+            logger.debug("No results found, we will try to fetch the data again.")
             raise NoResultException()
 
         for index, id in enumerate(batch_ids):
@@ -106,19 +100,22 @@ class SymptomOntologyConverter(OntologyBaseConverter):
                     id=id,
                     reason="Invalid prefix, only support %s" % self.databases,
                 )
-                self._failed_ids.append(failed_id)
+                failed_ids.append(failed_id)
                 continue
 
-            result = search_results[index]
+            result = search_results[index] if len(search_results) > 0 else {}
             mapping_response_list = result.get("mappingResponseList", [])
             if len(mapping_response_list) == 0:
                 failed_id = FailedId(idx=index, id=id, reason="No results found")
-                self._failed_ids.append(failed_id)
+                failed_ids.append(failed_id)
                 continue
             else:
                 converted_id_dict = {}
+                converted_id_dict["idx"] = index
                 converted_id_dict[prefix] = id
                 converted_id_dict["raw_id"] = id
+                # OxO don't provide any metadata for the disease ontology. So we will update the metadata later by using the OLS API.
+                converted_id_dict["metadata"] = None
                 difference = [x for x in self.databases if x != prefix]
                 for choice in difference:
                     # The prefix maybe case insensitive, such as MeSH:D015161. But we need to keep all the prefix in upper case.
@@ -135,13 +132,12 @@ class SymptomOntologyConverter(OntologyBaseConverter):
                             f'{choice}:{x.get("curie").split(":")[1]}' for x in matched
                         ]
                         converted_id_dict[choice] = converted_ids
-                        converted_id_dict["idx"] = index
 
                         if choice == self.default_database and len(converted_ids) > 1:
                             failed_id = FailedId(
                                 idx=index, id=id, reason="Multiple results found"
                             )
-                            self._failed_ids.append(failed_id)
+                            failed_ids.append(failed_id)
                             # Abandon the converted_id_dict, otherwise the converted_ids will be added to the converted_ids list.
                             converted_id_dict = {}
                             break
@@ -152,7 +148,7 @@ class SymptomOntologyConverter(OntologyBaseConverter):
                                 id=id,
                                 reason="The strategy is unique, but multiple results found",
                             )
-                            self._failed_ids.append(failed_id)
+                            failed_ids.append(failed_id)
                             # Abandon the converted_id_dict, otherwise the converted_ids will be added to the converted_ids list.
                             converted_id_dict = {}
                             break
@@ -160,7 +156,11 @@ class SymptomOntologyConverter(OntologyBaseConverter):
                         converted_id_dict[choice] = None
 
                 if converted_id_dict:
-                    self.add_converted_id_dict(converted_id_dict)
+                    converted_id_dicts.append(converted_id_dict)
+
+        logger.debug("The converted_id_dicts: %s" % converted_id_dicts)
+        logger.debug("The failed_ids: %s" % failed_ids)
+        return converted_id_dicts, failed_ids
 
     def _fetch_ids(self, ids) -> dict:
         """Fetch the ids from the OXO API.
@@ -194,6 +194,19 @@ class SymptomOntologyConverter(OntologyBaseConverter):
         logger.debug("Requests: %s\n%s" % (results.json(), payload))
         return results.json()
 
+    @retry(stop=stop_after_attempt(15), wait=wait_random(min=1, max=15))
+    def _fetch_format_data(self, ids: List[str]) -> tuple[List[Dict[str, Any]], List[FailedId]]:
+        """Fetch and format the ids.
+
+        Args:
+            ids (List[str]): A list of ids.
+
+        Returns:
+            None
+        """
+        response = self._fetch_ids(ids)
+        return self._format_response(response, ids)
+
     def convert(self) -> ConversionResult:
         """Convert the ids to different databases.
 
@@ -202,10 +215,23 @@ class SymptomOntologyConverter(OntologyBaseConverter):
         """
         # Cannot use the parallel processing, otherwise the index order will not be correct.
         for i in range(0, len(self._ids), self._batch_size):
+            logger.info(
+                "Start to convert the disease ids: %s-%s/%s"
+                % (i, i + self._batch_size, len(self._ids))
+            )
             batch_ids = self._ids[i : i + self._batch_size]
-            self._fetch_format_data(batch_ids)
+            converted_id_dicts, failed_ids = self._fetch_format_data(batch_ids)
+            self.add_failed_ids(failed_ids)
+            converted_ids = self.id_dicts2converted_ids(converted_id_dicts)
+            updated_converted_ids = OLS4Query.update_metadata(
+                converted_ids, self.default_database
+            )
+            self.add_converted_ids(updated_converted_ids)
 
-            logger.info("Finish %s/%s" % (i + self._batch_size, len(self._ids)))
+            logger.info(
+                "Finish convert %s-%s/%s\n\n"
+                % (i, i + self._batch_size, len(self._ids))
+            )
             time.sleep(self._sleep_time)
 
         return ConversionResult(
@@ -244,6 +270,13 @@ class SymptomOntologyFormatter(BaseOntologyFormatter):
             **kwargs,
         )
 
+    def format_by_metadata(
+        self, new_row: Dict[str, Any], metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        new_row = self.default_format_by_metadata(new_row, metadata)
+
+        return new_row
+
     def format(self):
         """Format the symptom ontology file.
 
@@ -258,7 +291,7 @@ if __name__ == "__main__":
         "SYMP:0000099",
         "SYMP:0000259",
         "SYMP:0000729",
-        "MESH:D010146",
+        "MESH:D000006",
         "MESH:D000270",
         "MESH:D000326",
         "MESH:D000334",

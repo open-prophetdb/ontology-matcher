@@ -289,7 +289,7 @@ class OntologyBaseConverter:
                     {"idx": idx, "id": id, "reason": "The id must be a string."}
                 )
 
-            if not re.match(r"^(%s):[a-z0-9A-Z\.]+$" % "|".join(self._databases), id):
+            if not re.match(r"^(%s):[a-z0-9A-Z\.\*\+]+$" % "|".join(self._databases), id):
                 failed_ids.append(
                     {
                         "idx": idx,
@@ -602,7 +602,7 @@ class BaseOntologyFormatter(ABC):
                 "Cannot find the related record, please check your id. you may need to use the raw id not the converted id."
             )
         elif len(records) > 1:
-            return pd.DataFrame(records[0], dtype=str)
+            return pd.DataFrame(records.iloc[0], dtype=str)
         else:
             return records
 

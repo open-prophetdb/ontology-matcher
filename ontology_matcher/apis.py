@@ -227,6 +227,71 @@ class OLS4Query:
 
         return results
 
+    @classmethod
+    def update_metadata(
+        cls, converted_ids: List[ConvertedId], database: str
+    ) -> List[ConvertedId]:
+        logger.debug("OLS4Query.update_metadata...")
+
+        def get_id(x: str | List[str]) -> str | None:
+            if isinstance(x, list) and len(x) == 1:
+                return x[0]
+            elif isinstance(x, str):
+                return x
+            else:
+                return None
+
+        selected_id_pair: Dict[str, str] = {
+            # Stupid warning: get_id(x.get(database)) must be not None, because if clause has already checked it.
+            # type: ignore
+            x.get_raw_id(): [idx, get_id(x.get(database))]
+            for idx, x in enumerate(converted_ids)
+            if get_id(x.get(database))
+        }
+        idx_ids = list(selected_id_pair.values())
+        logger.debug("converted_ids: %s" % converted_ids)
+        logger.debug("Selected id pair: %s" % selected_id_pair)
+        logger.debug("Ids: %s" % idx_ids)
+
+        ids = [x[1] for x in idx_ids]
+        index_id_dict = {x[1]: x[0] for x in idx_ids}
+        grouped_ids = make_grouped_ids(ids)
+        logger.debug("Grouped ids: %s" % grouped_ids)
+        logger.debug("Index-id dict: %s" % index_id_dict)
+
+        id_dict = grouped_ids.id_dict
+
+        # Groups may be similar to 'SYMP', 'MESH', etc.
+        groups = id_dict.keys()
+        logger.debug("Groups: %s" % groups)
+
+        valid_keys = set(groups).intersection(set(cls.supported_ontologies.keys()))
+        logger.debug("Valid keys: %s" % valid_keys)
+
+        for group in valid_keys:
+            ids = [f"{group}:{x}" for x in id_dict.get(group, [])]
+            ids = ",".join(ids)
+
+            query = cls(q=ids, ontology=group, exact=True)
+            results = query.parse()
+
+            for index, result in enumerate(results):
+                id = result.id
+                idx = int(index_id_dict.get(id, "-1"))
+                if idx != -1:
+                    matched = converted_ids[idx]
+
+                    logger.debug(
+                        "Matched ConvertedId: %s, %s" % (matched, result.__dict__),
+                    )
+
+                    matched.update_metadata(result.__dict__)
+                else:
+                    logger.warning("Cannot find the id %s in the converted ids." % id)
+
+        logger.debug("MyDisease.update_metadata done.\n\n")
+        return converted_ids
+
 
 class MyGene:
     """Query the MyGene API.

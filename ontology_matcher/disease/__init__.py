@@ -2,7 +2,6 @@ import re
 import time
 import logging
 import requests
-import requests_cache
 import pandas as pd
 from tenacity import retry, stop_after_attempt, wait_random
 from pathlib import Path
