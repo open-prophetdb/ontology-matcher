@@ -24,7 +24,17 @@ logger = logging.getLogger("ontology_matcher.disease")
 DISEASE_DICT = OntologyType(
     type="Disease",
     default="MONDO",
-    choices=["MONDO", "DOID", "MESH", "OMIM", "ICD-9", "HP", "ICD10CM", "ORDO", "UMLS"],
+    choices=[
+        "MONDO",
+        "DOID",
+        "MESH",
+        "OMIM",
+        "ICD-9",
+        "HP",
+        "ICD10CM",
+        "Orphanet",
+        "UMLS",
+    ],
 )
 
 
@@ -66,7 +76,7 @@ class DiseaseOntologyConverter(OntologyBaseConverter):
             "ICD10CM": "https://www.cdc.gov/nchs/icd/icd-10-cm.htm",
             # OxO Cannot support SNOMED currently. Please access https://www.ebi.ac.uk/spot/oxo/api/datasources/SNOMED to check.
             # "SNOMED": "https://www.snomed.org/",
-            "ORDO": "https://www.orpha.net/consor/cgi-bin/index.php",
+            "Orphanet": "https://www.orpha.net/consor/cgi-bin/index.php",
             "UMLS": "https://www.nlm.nih.gov/research/umls/",
         }
 
@@ -289,7 +299,7 @@ if __name__ == "__main__":
         "MESH:D015673",
         "ICD10CM:C34.9",
         "HP:0030358",
-        "ORDO:94063",
+        "Orphanet:94063",
         "UMLS:C0007131",
         "ICD-9:349.89",
         "MESH:D000069290",

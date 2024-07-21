@@ -905,9 +905,11 @@ class MyDisease:
         )
 
         orphanet = list(
-            map(lambda x: "ORDO:%s" % x, flatten_dedup(xrefs.get("orphanet", [])))
+            map(lambda x: "Orphanet:%s" % x, flatten_dedup(xrefs.get("orphanet", [])))
         )
-        ordo = list(map(lambda x: "ORDO:%s" % x, flatten_dedup(xrefs.get("ordo", []))))
+        ordo = list(
+            map(lambda x: "Orphanet:%s" % x, flatten_dedup(xrefs.get("ordo", [])))
+        )
         ordo = list(set(orphanet + ordo))
 
         umls = list(map(lambda x: "UMLS:%s" % x, flatten_dedup(xrefs.get("umls", []))))
@@ -930,7 +932,12 @@ class MyDisease:
         )
         icd10 = list(set(icd10 + icd10cm))
 
-        hp = list(map(lambda x: "HP:%s" % x, flatten_dedup(xrefs.get("hp", []))))
+        def format_hp(x: str) -> str:
+            if x.startswith("HP:"):
+                return x
+            else:
+                return f"HP:{x}"
+        hp = list(map(format_hp, flatten_dedup(xrefs.get("hp", []))))
         omim = list(map(lambda x: "OMIM:%s" % x, flatten_dedup(xrefs.get("omim", []))))
 
         return list(set(doid + mesh + orphanet + umls + icd9 + icd10 + hp + omim))

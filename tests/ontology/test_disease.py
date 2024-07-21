@@ -16,6 +16,7 @@ class TestDiseaseOntologyConverter(unittest.TestCase):
             "MESH:D015673",
             "HP:0030358",
             "ORDO:94063",
+            "Orphanet:94063",
             "UMLS:C0007131",
             "ICD-9:349.89", # Multiple mappings between ICD-9 and MONDO
             "ICD10CM:C80", # Cannot find a mapping between ICD10CM and MONDO
