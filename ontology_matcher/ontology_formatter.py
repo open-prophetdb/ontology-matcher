@@ -730,9 +730,8 @@ class BaseOntologyFormatter(ABC):
                 new_row["raw_id"] = raw_id
                 new_row[self.file_format_cls.ID] = str(id)
                 # new_row[self.file_format_cls.RESOURCE] = self.ontology_type.default
-                # We don't need to change the resource, just keep it same as the prefix of the id.
-                prefix, value = str(id).split(":")
-                new_row[self.file_format_cls.RESOURCE] = prefix
+                # We don't need to change the resource, just keep it same as the raw record.
+                new_row[self.file_format_cls.RESOURCE] = record.get("resource").values[0]  # type: ignore
                 new_row[self.file_format_cls.LABEL] = self.ontology_type.type
 
                 new_row[self.file_format_cls.XREFS] = self.join_lst(xrefs)
@@ -750,7 +749,7 @@ class BaseOntologyFormatter(ABC):
             new_row = {key: self.format_record_value(record, key) for key in columns}
             new_row[self.file_format_cls.ID] = id
             new_row[self.file_format_cls.LABEL] = self.ontology_type.type
-            new_row[self.file_format_cls.RESOURCE] = prefix
+            new_row[self.file_format_cls.RESOURCE] = record.get("resource").values[0]  # type: ignore
 
             # Keep the original record if the id match the default prefix.
             # If we allow the mixture strategy, we will keep the original record even if the id does not match the default prefix. So we don't have the failed data to return.
